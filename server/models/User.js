@@ -58,6 +58,10 @@ userSchema.methods.isCorrectPassword = async function (password) {
   return bcrypt.compare(password, this.password);
 };
 
+// virtual for getting the number of chats a user is part of
+userSchema.virtual('chatCount').get(function () {
+  return this.chats ? this.chats.length : 0;
+});
 
 
 const User = model('User', userSchema);
