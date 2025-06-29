@@ -7,8 +7,8 @@ import Auth from '../utils/auth';
 
 const Signup = () => {
   // set initial form state
-  const [userFormData, setUserFormData] = useState({ userName: '', userEmail: '', password: '' });
-  const [signedUpUserName, setSignedUpUserName] = useState('');
+  const [userFormData, setUserFormData] = useState({ username: '', email: '', password: '' });
+  const [signedUpusername, setSignedUpusername] = useState('');
   // set state for form validation
   const [validated] = useState(false);
   // set state for alert
@@ -60,11 +60,11 @@ const Signup = () => {
     console.log(Auth.loggedIn());
     // clear form values
 
-    setSignedUpUserName(userFormData.userName);
+    setSignedUpusername(userFormData.username);
  
     setUserFormData({
-      userName: '',
-      userEmail: '',
+      username: '',
+      email: '',
       password: '',
     });
 
@@ -72,9 +72,9 @@ const Signup = () => {
   };
 
   const handleClose = () => {
-    setSignedUpUserName('');
+    setSignedUpusername('');
     // If you are using a Modal, control its visibility with state instead of Modal.hide()
-    // For now, this just resets the signedUpUserName
+    // For now, this just resets the signedUpusername
   }
 
 
@@ -91,7 +91,7 @@ const Signup = () => {
             {data ? (
             <h4 className="card-header bg-dark text-light p-2">
               
-              Welcome {signedUpUserName}!
+              Welcome {signedUpusername}!
               Your signup was successful!
               
             </h4>
@@ -103,29 +103,29 @@ const Signup = () => {
         </Alert>
 
         <Form.Group className='mb-3'>
-          <Form.Label htmlFor='userName'>Username</Form.Label>
+          <Form.Label htmlFor='username'>username</Form.Label>
           <Form.Control
             type='text'
-            placeholder='Your Username'
-            name='userName'
+            placeholder='Your username'
+            name='username'
             onChange={handleInputChange}
-            value={userFormData.userName}
+            value={userFormData.username}
             required
           />
-          <Form.Control.Feedback type='invalid'>Username is required!</Form.Control.Feedback>
+          <Form.Control.Feedback type='invalid'>username is required!</Form.Control.Feedback>
         </Form.Group>
 
         <Form.Group className='mb-3'>
-          <Form.Label htmlFor='userEmail'>Email</Form.Label>
+          <Form.Label htmlFor='email'>Email</Form.Label>
           <Form.Control
-            type='userEmail'
+            type='email'
             placeholder='Your email address'
-            name='userEmail'
+            name='email'
             onChange={handleInputChange}
-            value={userFormData.userEmail}
+            value={userFormData.email}
             required
           />
-          <Form.Control.Feedback type='invalid'>userEmail is required!</Form.Control.Feedback>
+          <Form.Control.Feedback type='invalid'>email is required!</Form.Control.Feedback>
         </Form.Group>
 
         <Form.Group className='mb-3'>
@@ -141,7 +141,7 @@ const Signup = () => {
           <Form.Control.Feedback type='invalid'>Password is required!</Form.Control.Feedback>
         </Form.Group>
         <Button
-          disabled={!(userFormData.userName && userFormData.userEmail && userFormData.password)}
+          disabled={!(userFormData.username && userFormData.email && userFormData.password)}
           type='submit'
           variant='success'>
           Submit

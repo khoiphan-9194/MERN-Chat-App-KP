@@ -30,6 +30,7 @@ type Query {
   users: [User]
   user(_id: ID!): User
   chats: [Chat]
+  chatsByUser(userId: ID!): [Chat]
   chat(_id: ID!): Chat
   messages(chatId: ID!): [Message]
 }

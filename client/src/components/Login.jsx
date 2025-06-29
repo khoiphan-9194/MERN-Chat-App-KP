@@ -8,7 +8,7 @@ import { Form, Button, Alert } from 'react-bootstrap';
 import Auth from '../utils/auth';
 
 const Login = () => {
-  const [formState, setFormState] = useState({ userEmail: '', password: '' });
+  const [formState, setFormState] = useState({ email: '', password: '' });
   const [login, { error, data }] = useMutation(USER_LOGIN);
   const [validated] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
@@ -35,7 +35,7 @@ const Login = () => {
       if(!data) {
         throw new Error('something went wrong!');
       }
-      const { token, user } = data.userLogin;
+      const { token, user } = data.login;
       console.log(user)
       console.log(token)
       Auth.login(token);
@@ -46,7 +46,7 @@ const Login = () => {
 
     // clear form values
     setFormState({
-      userEmail: '',
+      email: '',
       password: '',
     });
   };
@@ -64,13 +64,13 @@ const Login = () => {
           Something went wrong with your login credentials!
         </Alert>
         <Form.Group className='mb-3'>
-          <Form.Label htmlFor='userEmail' style={{ color: 'white' }}>Email</Form.Label>
+          <Form.Label htmlFor='email' style={{ color: 'white' }}>Email</Form.Label>
           <Form.Control
             type='text'
             placeholder='Your email'
-            name='userEmail'
+            name='email'
             onChange={handleChange}
-            value={formState.userEmail}
+            value={formState.email}
             required
             style={{ color: 'black', backgroundColor: 'white', borderColor: '#444' }}
           />
@@ -91,7 +91,7 @@ const Login = () => {
           <Form.Control.Feedback type='invalid' style={{ color: 'white' }}>Password is required!</Form.Control.Feedback>
         </Form.Group>
         <Button
-          disabled={!(formState.userEmail && formState.password)}
+          disabled={!(formState.email && formState.password)}
           type='submit'
           variant='success'
           style={{ color: 'white' }}
@@ -125,10 +125,10 @@ export default Login;
 /*
     <input
                   className="form-input"
-                  placeholder="Your userEmail"
-                  name="userEmail"
-                  type="userEmail"
-                  value={formState.userEmail}
+                  placeholder="Your email"
+                  name="email"
+                  type="email"
+                  value={formState.email}
                   onChange={handleChange}
                 />
                 <input

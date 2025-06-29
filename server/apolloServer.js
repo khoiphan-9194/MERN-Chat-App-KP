@@ -23,6 +23,9 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("Client disconnected");
   });
+  // You can add more event listeners here for real-time features
+
+
 });
 
 const server = new ApolloServer({

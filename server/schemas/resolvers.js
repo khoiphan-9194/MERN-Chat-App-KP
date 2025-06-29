@@ -16,6 +16,20 @@ const resolvers = {
     chats: async () => {
       return Chat.find().populate('users', '-__v -password').populate('latestMessage');
     },
+
+    chatsByUser: async (parent, { userId }, context) => {
+      if (!context.user) {
+        throw new AuthenticationError('You need to be logged in to view chats');
+      }
+      return Chat.find({ users: context.user._id }).populate('users', '-__v -password')
+        .populate({
+          path: 'latestMessage',
+          populate: {
+            path: 'sender',
+            select: '-__v -password'
+          }
+        });
+    },
     chat: async (parent, { _id }) => {
       return Chat.findById(_id)
         .populate('users', '-__v -password')
