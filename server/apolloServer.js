@@ -5,6 +5,7 @@ const path = require("path");
 const { authMiddleware } = require("./utils/auth");
 const socketIO = require("socket.io");
 const http = require("http");
+const socketController = require("./utils/socketController");
 
 const { typeDefs, resolvers } = require("./schemas");
 const db = require("./config/connection");
@@ -14,19 +15,29 @@ const app = express();
 
 // Create HTTP server first, for both Express and Socket.IO
 const httpServer = http.createServer(app);
-const io = socketIO(httpServer);
 
-// Socket.IO connection listener
-io.on("connection", (socket) => {
-  console.log("New client connected");
+const io = socketIO(httpServer, {
 
-  socket.on("disconnect", () => {
-    console.log("Client disconnected");
-  });
-  // You can add more event listeners here for real-time features
-
-
+  pingTimeout: 60000, // 60 seconds
+  pingInterval: 25000, // 25 seconds
+  cors: // cors is a middleware that allows cross-origin requests
+    // cross-origin is when a request is made from a different origin than the server
+    // for example, if the server is running on localhost:3001 and the client is running on localhost:3000,
+    // what happens is that the client is trying to access a resource like http://localhost:3001/graphql to
+    // send a message, but the server is not allowing it because the origin is different
+    // this is where we allow the client to access the server
+  
+  {
+    origin: "localhost:3000" || process.env.CLIENT_URL, // means that the server will allow requests from localhost:3000 or the CLIENT_URL environment variable,
+    methods: ["GET", "POST"]
+  },
 });
+
+socketController(io);
+
+
+
+
 
 const server = new ApolloServer({
   typeDefs,

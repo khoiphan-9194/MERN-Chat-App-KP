@@ -8,7 +8,9 @@ import { setContext } from "@apollo/client/link/context";
 import { Outlet } from "react-router-dom";
 
 import CustomThemeProvider from "./utils/CustomThemeContext";
+import AuthenUserInfoProvider from "./utils/AuthUser_Info_Context";
 
+ 
 const httpLink = createHttpLink({
   uri: "/graphql",
 });
@@ -33,11 +35,12 @@ const client = new ApolloClient({
 function App() {
   return (
     <ApolloProvider client={client}>
-   
+      <AuthenUserInfoProvider>
+        {/* This provider can be used to manage user info across the app */}
         <CustomThemeProvider>
           <Outlet />
         </CustomThemeProvider>
-     
+      </AuthenUserInfoProvider>
     </ApolloProvider>
   );
 }

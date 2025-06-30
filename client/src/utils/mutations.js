@@ -28,3 +28,15 @@ export const USER_SIGNUP = gql`
   }
 `;
 
+export const SEND_MESSAGE = gql`
+  mutation addMessage($chatId: ID!, $content: String!) {
+    addMessage(chatId: $chatId, content: $content) {
+      _id
+      content
+      sender {
+        _id
+        username
+      }
+    }
+  }
+`;

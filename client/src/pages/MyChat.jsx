@@ -1,62 +1,68 @@
-import React from 'react'
-import { useQuery } from '@apollo/client';
-import { GET_CHATS_BY_USER } from '../utils/queries';
-import auth from '../utils/auth';
-import { Box, Text, Stack, Button,ButtonGroup } from '@chakra-ui/react';
+import React from "react";
+import { useQuery } from "@apollo/client";
+import { GET_CHATS_BY_USER } from "../utils/queries";
+import auth from "../utils/auth";
+import { Box, Text, Button } from "@chakra-ui/react";
+import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 
 function MyChat() {
+  const { authUserInfo, updateSelectedChat } = useAuthUserInfo();
+  const userProfile = auth.getProfile()?.data;
+  const userId = userProfile?._id;
+
   const { loading, error, data } = useQuery(GET_CHATS_BY_USER, {
-    variables: { userId: auth.getProfile().data._id }
-
+    variables: { userId },
+    skip: !userId,
   });
+
   const chats = data?.chatsByUser || [];
-  console.log(chats);
-  console.log("User ID:", auth.getProfile().data.username)
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error.message}</p>;
-  
-  const handleViewChat = (chatId) => {
-    // Logic to navigate to the chat page or display chat messages
-    alert(`Viewing chat with ID: ${chatId}`);
-
+  const handleViewChat = (chat) => {
+    alert(`Viewing chat: ${chat.chat_name}`);
+    updateSelectedChat(chat);
+    console.log("Selected Chat:", chat);
+    // Optional: Navigate to chat page here if using React Router
+    // navigate(`/chat/${chat._id}`);
   };
 
+  if (loading) return <Text>Loading chats...</Text>;
+  if (error) return <Text color="red.500">Error: {error.message}</Text>;
+
   return (
-    <div>
-      <Box bg="gray" borderRadius="md" boxShadow="md" maxW="400px" mx="auto"
-        w="100%" p="4" color="white" _hover={{ bg: "green" }}>
-        {chats.length > 0 ? (
-          chats.map(chat => (
-            <Box key={chat._id}>
-              <Text fontWeight="bold">{chat.chat_name}</Text>
-              <Text fontSize="sm">
-                <b>
-                  <span style={{ fontWeight: 'bold' }}>
-                    {chat.latestMessage?.sender?.username}
-                  </span>
-                  {': '}
-                </b>
-                {chat.latestMessage?.content}
-              </Text>
-              <Box display="flex" justifyContent="center" mt={2}>
-                <Button
-                  variant="inline"
-                  colorScheme="teal"
-                  size="sm"
-                  onClick={() => handleViewChat(chat._id)}
-                >
-                  View Chat
-                </Button>
-              </Box>
-            </Box>
-          ))
-        ) : (
-          <Text>No chats found.</Text>
-        )}
-      </Box>
-    </div>
+    <Box
+      bg="gray.700"
+      borderRadius="md"
+      boxShadow="md"
+      maxW="400px"
+      mx="auto"
+      w="100%"
+      p="4"
+      color="white"
+    >
+      {chats.length > 0 ? (
+        chats.map((chat) => (
+          <Box
+            key={chat._id}
+            p="3"
+            mb="2"
+            bg="gray.600"
+            borderRadius="md"
+            cursor="pointer"
+            _hover={{ bg: "teal.500" }}
+            onClick={() => handleViewChat(chat)}
+          >
+            <Text fontWeight="bold">{chat.chat_name}</Text>
+            <Text fontSize="sm">
+              <b>{chat.latestMessage?.sender?.username}:</b>{" "}
+              {chat.latestMessage?.content}
+            </Text>
+          </Box>
+        ))
+      ) : (
+        <Text>No chats found.</Text>
+      )}
+    </Box>
   );
 }
 
-export default MyChat
+export default MyChat;

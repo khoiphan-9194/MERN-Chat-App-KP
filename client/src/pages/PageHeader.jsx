@@ -9,9 +9,18 @@ import {
   HStack
 } from "@chakra-ui/react";
 import UserList from "./UserList";
+import auth from "../utils/auth";
+import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 
 //rfce
 function PageHeader() {
+  const { resetAuthUserInfo } = useAuthUserInfo();
+  const handleLogout = () => {
+    resetAuthUserInfo();
+    auth.logout();
+
+  };
+
   return (
     <>
       <Box flex="1" bg="whiteAlpha.900" p={4}>
@@ -72,7 +81,11 @@ function PageHeader() {
             Chat App
           </Text>
 
-          <Button variant="outline-secondary">
+          <Button variant="outline-secondary"
+          onClick={() => {
+            handleLogout();
+          }}
+          > 
             <span role="img" aria-label="logout" style={{ fontSize: "1.2em" }}>
               🚪 Logout
             </span>

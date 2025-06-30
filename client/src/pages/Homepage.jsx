@@ -13,7 +13,10 @@ import auth from "../utils/auth";
 
 
 
+
+
 function Homepage() {
+
 
 
   
@@ -26,7 +29,9 @@ function Homepage() {
       {auth.loggedIn() ? (
         <div>
           <h1>Welcome back!</h1>
-          <Link to="/chat">Go to Chat</Link>
+          <Link to={`/mychat/${auth.getProfile().data._id}`}>
+            Go to My Chat
+          </Link>
         </div>
       ) : (
         <div
