@@ -78,7 +78,9 @@ console.log("ChatPage: authUserInfo", authUserInfo);
 
               <Box flex={1} bg="whiteAlpha.900" p={4} borderRadius="lg">
                 <Text fontSize="4xl" textAlign="center">
-                  Chat App Column 2
+                       {authUserInfo.selectedChat?.chat_name || "Select a chat"}
+                  <br />
+                  Chat_ID: {authUserInfo.selectedChat?._id || "No chat selected"}
                 </Text>
                 <ChatMessage chatId={authUserInfo.selectedChat?._id} />
               </Box>
