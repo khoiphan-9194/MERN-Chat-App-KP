@@ -1,29 +1,62 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@apollo/client";
 import { GET_CHAT_MESSAGES } from "../utils/queries";
 import { SEND_MESSAGE } from "../utils/mutations";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
+import io from "socket.io-client";
 
+const socket = io("http://localhost:3001"); // ✅ Update if your backend runs elsewhere
 
 function ChatMessage({ chatId }) {
   const { authUserInfo } = useAuthUserInfo();
   const selectedChatId = authUserInfo.selectedChat?._id || chatId;
-    const userId = authUserInfo.user?.userId || authUserInfo.user?._id;
+  const userId = authUserInfo.user?.userId || authUserInfo.user?._id;
 
   const { loading, error, data, refetch } = useQuery(GET_CHAT_MESSAGES, {
     variables: { chatId: selectedChatId },
     skip: !selectedChatId,
   });
-    
-
 
   const [inputValue, setInputValue] = useState("");
+
+  // useRef is a hook that allows you to create a mutable object which holds a [.current] property
+
+  const messagesEndRef = useRef(null); // ✅ Ref for auto-scroll
+
+  // ✅ Scroll to bottom whenever messages update
+  useEffect(() => {
+    // initially messagesEndRef.current is null, so we check if it exists before scrolling
+    // if (messagesEndRef.current && data?.messages?.length > 0)  
+    // means that if messagesEndRef.current is not null and data.messages is not empty, then scroll to bottom
+    if (messagesEndRef.current && data?.messages?.length > 0) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [data?.messages]);
+
+  // ✅ Join chat room and listen for new messages via Socket.IO
+  useEffect(() => {
+    if (!selectedChatId) return;
+
+    socket.emit("joinChat", selectedChatId);
+
+    const handleNewMessage = (messageData) => {
+      if (messageData.chatId === selectedChatId) {
+        refetch(); // ✅ Trigger Apollo to reload messages from server
+      }
+    };
+
+    socket.on("newMessage", handleNewMessage);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+    };
+  }, [selectedChatId, refetch]);
 
   const [sendMessage] = useMutation(SEND_MESSAGE, {
     variables: { chatId: selectedChatId, content: inputValue },
     onCompleted: () => {
       setInputValue("");
-      refetch(); // Refresh messages after sending
+      refetch(); // ✅ Reload messages after sending
     },
     onError: (error) => {
       console.error("Error sending message:", error);
@@ -33,13 +66,15 @@ function ChatMessage({ chatId }) {
   const handleInputChange = (e) => setInputValue(e.target.value);
 
   const handleSendMessage = () => {
-    if (!inputValue.trim()) return; // Don't send empty messages
+    if (!inputValue.trim()) return;
     sendMessage();
+    // ❌ Optional: You don't need to emit socket here if backend already emits from resolver
+    // socket.emit("sendMessage", { chatId: selectedChatId, messageData: { content: inputValue } });
   };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault(); // Prevent newline
+      e.preventDefault();
       handleSendMessage();
     }
   };
@@ -64,7 +99,7 @@ function ChatMessage({ chatId }) {
         boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
       }}
     >
-      {/* Messages List */}
+      {/* ✅ Messages List */}
       <div
         style={{
           flex: 1,
@@ -79,8 +114,7 @@ function ChatMessage({ chatId }) {
           messages.map((message, index) => {
             const isOwnMessage = message.sender._id === userId;
             const isLastMessage = index === messages.length - 1;
-
-            const shouldShowUsername = isLastMessage && !isOwnMessage; // ✅ Only show username if last message is not user's
+            const shouldShowUsername = isLastMessage && !isOwnMessage;
 
             return (
               <div
@@ -101,23 +135,20 @@ function ChatMessage({ chatId }) {
                       : "18px 18px 18px 4px",
                     maxWidth: "70%",
                     wordBreak: "break-word",
-                    fontSize: "1rem",
+                    fontSize: "1.2rem",
                     boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
                     marginBottom: "8px",
                   }}
                 >
-                  {/* ✅ Show username for the last message if it's not from the user */}
-
                   {message.content}
                   {shouldShowUsername && (
                     <span
                       style={{
                         fontWeight: "lighter",
                         fontSize: "0.9rem",
-
-                        display:"flex",
+                        display: "flex",
                         color: "#555",
-                        marginTop: "4px",
+                        marginTop: "1px",
                       }}
                     >
                       {message.sender.username}
@@ -132,9 +163,12 @@ function ChatMessage({ chatId }) {
             No messages found.
           </p>
         )}
+
+        {/* ✅ Invisible div for scroll target */}
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
+      {/* ✅ Input */}
       <div
         style={{
           borderTop: "1px solid #e0e0e0",

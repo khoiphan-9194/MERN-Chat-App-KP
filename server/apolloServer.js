@@ -18,11 +18,11 @@ const httpServer = http.createServer(app);
 
 const allowedOrigins = ["http://localhost:3000", process.env.CLIENT_URL].filter(
   Boolean
-);
+); // Boolean is used to filter out any falsy values, ensuring that only valid URLs are included
 
 const io = socketIO(httpServer, {
-  pingTimeout: 60000,
-  pingInterval: 25000,
+  pingTimeout: 60000,// this means that if the server does not receive a ping from the client within 60 seconds, it will disconnect the client
+  pingInterval: 25000, // this means that the server will send a ping to the client every 25 seconds
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST"],
@@ -45,7 +45,9 @@ const startApolloServer = async () => {
   app.use(
     "/graphql",
     expressMiddleware(server, {
-      context: authMiddleware,
+      context: async ({ req, res }) => {
+        return authMiddleware({ req, res, io });
+      },
     })
   );
 
@@ -66,3 +68,25 @@ const startApolloServer = async () => {
 };
 
 startApolloServer();
+
+// ✅ Correct GraphQL middleware with both auth and io in context
+  // This middleware will handle GraphQL requests at the /graphql endpoint
+  // and provide the context with user authentication and socket.io instance
+  // so that resolvers can access the io instance for real-time features
+  // This is the correct way to set up the Apollo Server with Express
+  // and to ensure that the context is properly passed to the resolvers.
+  // app.use(
+  //   "/graphql",
+  //   expressMiddleware(server, {
+  //     context: async ({ req, res }) => {
+  //       // ✅ Get user from auth middleware
+  //       const authContext = await authMiddleware({ req, res });
+
+  //       // ✅ Return both user and io in context
+  //       return {
+  //         ...authContext, // Example: { user }
+  //         io, // ✅ Now resolvers can access io
+  //       };
+  //     },
+  //   })
+  // );

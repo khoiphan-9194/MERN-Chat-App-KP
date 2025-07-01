@@ -1,9 +1,13 @@
-import React from "react";
+import  { useEffect } from "react";
 import { useQuery } from "@apollo/client";
 import { GET_CHATS_BY_USER } from "../utils/queries";
 import auth from "../utils/auth";
 import { Box, Text, Button } from "@chakra-ui/react";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
+import  io  from "socket.io-client";
+import { use } from "react";
+
+const socket = io("http://localhost:3001"); // this should match your server URL
 
 function MyChat() {
   const { authUserInfo, updateSelectedChat } = useAuthUserInfo();
@@ -16,6 +20,9 @@ function MyChat() {
   });
 
   const chats = data?.chatsByUser || [];
+
+
+
 
   const handleViewChat = (chat) => {
     alert(`Viewing chat: ${chat.chat_name}`);
