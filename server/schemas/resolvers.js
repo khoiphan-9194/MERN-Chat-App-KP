@@ -75,7 +75,7 @@ const resolvers = {
             },
           ],
         })
-        .sort({ createdAt: 1 }); // Sort messages by creation date in descending order
+        
     },
   },
   Mutation: {
@@ -124,6 +124,7 @@ const resolvers = {
       // and then $size will check if the number of users in the chat is equal to the number of users in the array plus the current user.
 
       if (existingChat) {
+        
         return existingChat;
       }
 

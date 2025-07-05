@@ -40,3 +40,24 @@ export const SEND_MESSAGE = gql`
     }
   }
 `;
+
+export const CREATE_CHAT = gql`
+mutation createChat ($chat_name: String!, $users: [ID!]!) {
+  createChat(chat_name: $chat_name, users: $users) {
+    _id
+    chat_name
+    users {
+      _id
+      username
+    }
+    latestMessage {
+      _id
+      content
+      sender {
+        _id
+        username
+      }
+    }
+  }
+}
+`;

@@ -19,6 +19,7 @@ const messageSchema = new Schema(
             ref: "Chat",
             //required: true,
         },
+
     },
     {
         timestamps: true,

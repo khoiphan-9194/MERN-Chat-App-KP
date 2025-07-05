@@ -8,6 +8,12 @@ module.exports = (io) => {
       console.log(`✅ Socket ${socket.id} joined chat room: ${chatId}`);
     });
 
+    
+
+
+
+
+
     //socket.on ("sendMessaage") plays a role that
     // when a message is sent from the client,
     // it will emit the "newMessage" event to all clients in the chat room
@@ -26,3 +32,37 @@ module.exports = (io) => {
     });
   });
 };
+
+
+
+/*
+socket.on("sendMessage", ({ chatId, messageData }) => {
+  if (!chatId || !messageData) return;
+  // The server **receives** a "sendMessage" event from a client
+  // Then the server broadcasts the new message to everyone in the chat room as a "newMessage"
+  io.to(chatId).emit("newMessage", messageData);
+});
+
+This means:
+
+    Clients emit "sendMessage" when they want to send a new chat message to the server.
+
+    The server listens for "sendMessage" events from clients.
+
+    When the server receives a "sendMessage", it broadcasts a "newMessage" event with the message data to all clients in that chat room (including the sender).
+
+Therefore, on the client side:
+
+    You emit "sendMessage" to send a new message.
+
+    You listen for "newMessage" to get notified when anyone (you or other users) sends a new message in that chat room.
+
+
+    So, on the frontend:
+
+    You cannot call io.to(...) — that’s only available on the server.
+
+    You do call socket.on("newMessage", callback) to listen for new messages sent by the server.
+
+    You call socket.emit("sendMessage", data) to send a message to the server.
+*/ 
