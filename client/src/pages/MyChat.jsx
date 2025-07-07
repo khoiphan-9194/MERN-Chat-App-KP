@@ -4,13 +4,14 @@ import { GET_CHATS_BY_USER } from "../utils/queries";
 import auth from "../utils/auth";
 import { Box, Text } from "@chakra-ui/react";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
-import io from "socket.io-client";
+import socket from "../utils/socket-client"; // Import the Socket.IO client instance
 
 
 
-const socket = io("http://localhost:3001");
 
-function MyChat({userId, setCurrentChat}) {
+
+
+function MyChat({ userId, setCurrentChat }) {
   const { updateSelectedChat, authUserInfo } = useAuthUserInfo();
   const { loading, error, data, refetch } = useQuery(GET_CHATS_BY_USER, {
     variables: { userId },
@@ -24,12 +25,11 @@ function MyChat({userId, setCurrentChat}) {
   useEffect(() => {
     if (chats.length > 0) {
       chats.forEach((chat) => updateSelectedChat(chat)); // Keep adding to context
-     
     }
   }, [chats, updateSelectedChat]);
 
-  const joinedChatIds = useRef(new Set()); // To track joined chat IDs
 
+  const joinedChatIds = useRef(new Set()); // To track joined chat IDs
   useEffect(() => {
     if (!chats || chats.length === 0) return;
     // Join each chat room via Socket.IO
@@ -78,10 +78,28 @@ function MyChat({userId, setCurrentChat}) {
 
 
 
+useEffect(() => {
+  const handleNewChatRoom = (chatData) => {
+ // we check as long as user sent a message to the chat room, we will refetch the chats
+    if (!chatData || !chatData._id) return;
+    console.log("New chat room created:", chatData);
+    refetch();
+  };
+
+  // every time this component will always listen for new chat rooms
+  // and if a new chat room is created, we will refetch the chats
+  socket.on("newChatRoom", handleNewChatRoom);
+
+  return () => {
+    socket.off("newChatRoom", handleNewChatRoom);
+  };
+}, [refetch]);
+
+
   const handleViewChat = (chat) => {
     setCurrentChat(chat); // Only updates the currently *viewed* chat
-    refetch(); // Refetch to ensure latest messages are loaded
 
+    refetch(); // Refetch to ensure latest messages are loaded
   };
 
   if (loading) return <Text>Loading chats...</Text>;

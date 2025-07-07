@@ -96,6 +96,7 @@ const resolvers = {
       const token = signToken(user);
       return { token, user };
     },
+
     createChat: async (parent, { chat_name, users }, context) => {
       if (!context.user) {
         throw new AuthenticationError(
@@ -124,7 +125,6 @@ const resolvers = {
       // and then $size will check if the number of users in the chat is equal to the number of users in the array plus the current user.
 
       if (existingChat) {
-        
         return existingChat;
       }
 
@@ -135,11 +135,33 @@ const resolvers = {
         users: [context.user._id, ...users],
         groupAdmin: context.user._id,
       });
+
+      // ✅ Emit to the users involved in the chat
+      // what it does is that it will emit the new chat to all users in the chat room,
+      // so that they can receive the new chat in real-time without having to refresh the page
+      // IMPORTANT: Access io from context! because io will be passed from the server to the context
+      // when the user connects to the server, so that we can use it in the resolvers
+      // without this, we cannot access io in the resolvers 
+      // const io = context.io;
+
+      // if (io) {
+      //   // Emit to the users involved in the chat
+      //   for (const userId of users) {
+      //     io.to(userId).emit("newChatRoom", chat); // notify the target users
+      //     console.log(`from resolvers: New chat room created for user ${userId}`);
+      //   }
+      //   io.to(context.user._id).emit("newChatRoom", chat); // Also emit to creator
+      //   console.log(
+      //     `from resolvers: creator, New chat room created for user ${context.user._id}`
+      //   );
+      // } else {
+      //   console.warn("No io instance in context, skipping emit");
+      // }
       return chat;
     },
 
     addMessage: async (parent, { chatId, content }, context) => {
-      const { user, io } = context; 
+      const { user, io } = context;
 
       if (!user) {
         throw new AuthenticationError(
@@ -159,6 +181,8 @@ const resolvers = {
       if (!chat) {
         throw new Error("Chat not found");
       }
+
+      const isFirstMessage = !chat.latestMessage; // ✅ Check BEFORE saving
 
       if (!chat.users.includes(user._id)) {
         throw new Error("You are not a member of this chat");
@@ -201,6 +225,16 @@ const resolvers = {
         `✅ Resolver New message sent to chat ${chatId}:`,
         populatedMessage
       );
+
+      if (isFirstMessage) {
+        for (const userId of chat.users) {
+          if (userId.toString() !== user._id.toString()) {
+            io.to(userId.toString()).emit("newChatRoom", chat);
+            console.log(`✅ Notified User ${userId} of new chat room.`);
+          }
+        }
+      }
+      
 
       return populatedMessage;
     },

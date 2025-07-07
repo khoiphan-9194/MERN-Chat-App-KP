@@ -7,6 +7,8 @@ import auth from "../utils/auth";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 
 function ChatPage() {
+  
+
   const { authUserInfo, updateUserInfo } = useAuthUserInfo();
   const [currentChat, setCurrentChat] = useState(null);
 
@@ -38,9 +40,9 @@ function ChatPage() {
                 <Text fontSize="2xl" textAlign="center">
                   My Chat
                 </Text>
-                <MyChat 
-                  userId={authUserInfo.user?.userId} 
-                  setCurrentChat={setCurrentChat} 
+                <MyChat
+                  userId={authUserInfo.user?.userId}
+                  setCurrentChat={setCurrentChat}
                 />
               </Box>
 

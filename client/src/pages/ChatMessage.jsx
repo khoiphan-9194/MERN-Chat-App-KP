@@ -3,12 +3,13 @@ import { useQuery, useMutation } from "@apollo/client";
 import { GET_CHAT_MESSAGES } from "../utils/queries";
 import { SEND_MESSAGE } from "../utils/mutations";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
-import io from "socket.io-client";
 import ScrollableChat from "../UI/ScrollableChat";
+import socket from "../utils/socket-client"; // Import the Socket.IO client instance
 
-const socket = io("http://localhost:3001");
 
-function ChatMessage({ chatId, forceRefetch = false }) {
+
+function ChatMessage({ chatId }) 
+{
   const { authUserInfo } = useAuthUserInfo();
   const userId = authUserInfo.user?.userId || authUserInfo.user?._id;
 
@@ -39,13 +40,14 @@ function ChatMessage({ chatId, forceRefetch = false }) {
 
   // Refetch when forced (e.g., when clicking a chat with unseen messages)
   useEffect(() => {
-    if (forceRefetch && chatId) // Check if forceRefetch is true and chatId is valid
+    if (chatId) // Check if forceRefetch is true and chatId is valid
     {
-      refetch();
+     //alert("Refetching messages for chat: " + chatId);
+    refetch();
       // This will trigger a refetch of messages for the current chat
       
     }
-  }, [forceRefetch, chatId, refetch]); // ✅ Refetch messages when forceRefetch changes
+  }, [ chatId, refetch]); // ✅ Refetch messages when forceRefetch changes
 
   const [sendMessage] = useMutation(SEND_MESSAGE, {
     onCompleted: () => {

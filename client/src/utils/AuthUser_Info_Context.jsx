@@ -1,4 +1,8 @@
 import { createContext, useState, useContext, useEffect } from "react";
+import socket from "./socket-client";
+
+
+
 
 
 // 1. Create Context
@@ -6,9 +10,14 @@ export const AuthUser_Info_Context = createContext();
 
 // 2. Custom Hook for easy access
 export const useAuthUserInfo = () => useContext(AuthUser_Info_Context);
+// import io from "socket.io-client";
+
+
 
 // 3. Provider Component
 const AuthenUserInfoProvider = ({ children }) => {
+  // Initialize Socket.IO client
+
   const [authUserInfo, setAuthUserInfo] = useState({
     user: null, // Will store user object
     selectedChats: [], // Now an array for multiple selected chats
@@ -53,7 +62,6 @@ const AuthenUserInfoProvider = ({ children }) => {
           console.log("You have already selected this chat:", chat);
           return prev;
         }
-     
 
         console.log("Adding selected chat:", chat);
         return {
@@ -61,12 +69,10 @@ const AuthenUserInfoProvider = ({ children }) => {
           selectedChats: [...prev.selectedChats, chat],
         };
       });
-    }
-    else {
+    } else {
       console.error("Invalid chat object:", chat);
       alert("Invalid chat object. Please try again.");
     }
-   
   };
 
   // ✅ Replace entire selectedChats array
@@ -91,6 +97,20 @@ const AuthenUserInfoProvider = ({ children }) => {
   useEffect(() => {
     console.log("AuthUser_Info_Context updated:", authUserInfo);
   }, [authUserInfo]);
+
+  useEffect(() => {
+    const userId = authUserInfo.user?._id || authUserInfo.user?.userId;
+    if (userId) {
+      socket.connect(); // Connect only when ready
+      socket.emit("setupNewChat", {
+        _id: userId,
+        username: authUserInfo.user.username,
+      });
+      console.log("✅ Socket connected & joined personal room:", userId);
+    }
+    console.log("Socket connection status:", socket.connected);
+  }, [authUserInfo.user]);
+
 
   return (
     <AuthUser_Info_Context.Provider
