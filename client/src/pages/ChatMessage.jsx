@@ -66,7 +66,7 @@ function ChatMessage({ chatId })
     sendMessage({
       variables: {
         chatId,
-        content: inputValue,
+        message_content: inputValue,
       },
     });
   };

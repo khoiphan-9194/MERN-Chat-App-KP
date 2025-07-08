@@ -2,9 +2,10 @@ const typeDefs = `
 type User {
   _id: ID
   username: String
-  email: String
+  user_email: String
   password: String
   profile_picture: String
+  isOnline: Boolean
 }
  type Chat {
   _id: ID
@@ -13,13 +14,16 @@ type User {
   users: [User]
   latestMessage: Message
   groupAdmin: User
+  createdAt: String
+  wasSeen: Boolean
 }
 
 type Message {
   _id: ID
-  sender: User 
-  content: String
-  chat: Chat 
+  message_sender: User
+  message_content: String
+  chatRoom: Chat
+  createdAt: String
 }
 
 type Auth {
@@ -36,10 +40,13 @@ type Query {
 }
 
 type Mutation {
-  addUser(username: String!, email: String!, password: String!): Auth
-  login(email: String!, password: String!): Auth
+  addUser(username: String!, user_email: String!, password: String!): Auth
+  updateUser(_id: ID!, username: String, user_email: String, password: String, profile_picture: String): User
+  login(user_email: String!, password: String!): Auth
   createChat(chat_name: String!, users: [ID!]!): Chat
-  addMessage(chatId: ID!, content: String!): Message
+  addMessage(chatId: ID!, message_content: String!): Message
+  updateChat(chatId: ID!, chat_name: String, users: [ID!]): Chat
+  deleteChat(chatId: ID!): Chat
  
 }
 `;

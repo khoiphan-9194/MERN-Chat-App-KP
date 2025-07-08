@@ -8,7 +8,7 @@ import { Form, Button, Alert } from 'react-bootstrap';
 import Auth from '../utils/auth';
 
 const Login = () => {
-  const [formState, setFormState] = useState({ email: '', password: '' });
+  const [formState, setFormState] = useState({ user_email: '', password: '' });
   const [login, { error, data }] = useMutation(USER_LOGIN);
   const [validated] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
@@ -46,7 +46,7 @@ const Login = () => {
 
     // clear form values
     setFormState({
-      email: '',
+      user_email: '',
       password: '',
     });
   };
@@ -64,17 +64,17 @@ const Login = () => {
           Something went wrong with your login credentials!
         </Alert>
         <Form.Group className='mb-3'>
-          <Form.Label htmlFor='email' style={{ color: 'white' }}>Email</Form.Label>
+          <Form.Label htmlFor='user_email' style={{ color: 'white' }}>Email</Form.Label>
           <Form.Control
             type='text'
             placeholder='Your email'
-            name='email'
+            name='user_email'
             onChange={handleChange}
-            value={formState.email}
+            value={formState.user_email}
             required
             style={{ color: 'black', backgroundColor: 'white', borderColor: '#444' }}
           />
-          <Form.Control.Feedback type='invalid' style={{ color: 'white' }}>Email is required!</Form.Control.Feedback>
+          <Form.Control.Feedback type='invalid' style={{ color: 'white' }}>user_email is required!</Form.Control.Feedback>
         </Form.Group>
 
         <Form.Group className='mb-3'>
@@ -91,7 +91,7 @@ const Login = () => {
           <Form.Control.Feedback type='invalid' style={{ color: 'white' }}>Password is required!</Form.Control.Feedback>
         </Form.Group>
         <Button
-          disabled={!(formState.email && formState.password)}
+          disabled={!(formState.user_email && formState.password)}
           type='submit'
           variant='success'
           style={{ color: 'white' }}
@@ -125,10 +125,10 @@ export default Login;
 /*
     <input
                   className="form-input"
-                  placeholder="Your email"
-                  name="email"
-                  type="email"
-                  value={formState.email}
+                  placeholder="Your user_email"
+                  name="user_email"
+                  type="user_email"
+                  value={formState.user_email}
                   onChange={handleChange}
                 />
                 <input

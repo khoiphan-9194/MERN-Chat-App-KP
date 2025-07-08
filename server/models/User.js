@@ -10,31 +10,27 @@ const userSchema = new Schema(
       required: true,
       unique: true,
     },
-    email: {
+    user_email: {
       type: String,
       required: true,
       unique: true,
-      match: [/.+@.+\..+/, 'Must use a valid email address'],
+      match: [/.+@.+\..+/, "Must use a valid email address"],
     },
     password: {
       type: String,
       required: true,
-      
     },
-    
+
     profile_picture: {
       type: String,
-      default: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d',
+      default: "/assets/default-avatar.jpg", // path to the default profile picture
       // default profile picture if none is provided
     },
-    
-    
-     
-    
-  
+    isOnline: {
+      type: Boolean,
+      default: false, // default to false, user is not online
+    },
   },
-
-
 
   // set this to use virtual below
   {

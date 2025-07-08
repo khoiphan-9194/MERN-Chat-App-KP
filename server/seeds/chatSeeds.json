@@ -1,14 +1,18 @@
 [
 {
   "chat_name": "General",
-  "isGroupChat": false
+  "isGroupChat": false,
+  "wasSeen": true
 },
 {
   "chat_name": "Coding",
-  "isGroupChat": false
+  "isGroupChat": false,
+  "wasSeen": true
 },
 {
   "chat_name": "Music",
-  "isGroupChat": false
+  "isGroupChat": false,
+  "wasSeen": true
+
 }
 ]

@@ -16,10 +16,16 @@ const resolvers = {
     chats: async () => {
       return Chat.find()
         .populate("users", "-__v -password")
-        .populate("latestMessage");
+        .populate({
+          path: "latestMessage",
+          populate: {
+            path: "message_sender",
+            select: "-__v -password",
+          },
+        });
     },
 
-    chatsByUser: async (parent, { userId }, context) => {
+    chatsByUser: async (_, __, context) => {
       if (!context.user) {
         throw new AuthenticationError("You need to be logged in to view chats");
       }
@@ -28,16 +34,18 @@ const resolvers = {
         .populate({
           path: "latestMessage",
           populate: {
-            path: "sender",
+            path: "message_sender",
             select: "-__v -password",
           },
         });
     },
+
     chat: async (parent, { _id }) => {
       return Chat.findById(_id)
         .populate("users", "-__v -password")
         .populate("latestMessage");
     },
+
     messages: async (_, { chatId }, context) => {
       if (!context.user) {
         throw new AuthenticationError(
@@ -56,13 +64,18 @@ const resolvers = {
         throw new Error("Chat not found");
       }
       // Check if the user is part of the chat
-      if (!chat.users.includes(context.user._id)) {
+      // To ensure that the .includes check works correctly with Mongoose ObjectIds, 
+      // convert both chat.users and context.user._id to strings before comparison.
+      if (!chat.users.map(u => u.toString()).includes(context.user._id.toString())) {
         throw new Error("You are not a member of this chat");
       }
-      return Message.find({ chat: chatId })
-        .populate("sender", "-__v -password")
+      return Message.find({ chatRoom: chatId })
         .populate({
-          path: "chat",
+          path: "message_sender",
+          select: "-__v -password",
+        })
+        .populate({
+          path: "chatRoom",
           select: "-__v",
           populate: [
             {
@@ -74,20 +87,20 @@ const resolvers = {
               select: "-__v",
             },
           ],
-        })
+        });
         
     },
   },
   Mutation: {
-    addUser: async (parent, { username, email, password }) => {
-      const user = await User.create({ username, email, password });
+    addUser: async (parent, { username, user_email, password }) => {
+      const user = await User.create({ username, user_email, password });
       const token = signToken(user);
       return { token, user };
     },
-    login: async (parent, { email, password }) => {
-      const user = await User.findOne({ email });
+    login: async (parent, { user_email, password }) => {
+      const user = await User.findOne({ user_email });
       if (!user) {
-        throw new AuthenticationError("No user found with this email address");
+        throw new AuthenticationError("No user found with this user_email address");
       }
       const correctPw = await user.isCorrectPassword(password);
       if (!correctPw) {
@@ -95,6 +108,23 @@ const resolvers = {
       }
       const token = signToken(user);
       return { token, user };
+    },
+    updateUser: async (_, { _id, username, user_email, password, profile_picture }, context) => {
+      if (!context.user || context.user._id.toString() !== _id) {
+        throw new AuthenticationError("You can only update your own profile");
+      }
+      
+      const update_user = await User.findByIdAndUpdate(
+        _id,
+        { username, user_email, password, profile_picture },
+        { new: true, runValidators: true }
+      ).select("-__v -password");
+      if (!update_user) {
+        throw new Error("User not found");
+      }
+      return update_user;
+
+      
     },
 
     createChat: async (parent, { chat_name, users }, context) => {
@@ -133,7 +163,9 @@ const resolvers = {
         chat_name,
         isGroupChat: false,
         users: [context.user._id, ...users],
-        groupAdmin: context.user._id,
+        groupAdmin: context.user._id,  
+        
+
       });
 
       // ✅ Emit to the users involved in the chat
@@ -160,7 +192,25 @@ const resolvers = {
       return chat;
     },
 
-    addMessage: async (parent, { chatId, content }, context) => {
+    deleteChat: async (parent, { chatId }, context) => {
+      if (!context.user) {
+        throw new AuthenticationError("You need to be logged in to delete a chat");
+      }
+      const chat = await Chat.findById(chatId);
+      if (!chat) {
+        throw new Error("Chat not found");
+      }
+      if (chat.groupAdmin.toString() !== context.user._id.toString()) {
+        throw new AuthenticationError("You are not authorized to delete this chat");
+      }
+      // Delete the chat
+      const deletedChat = await Chat.findByIdAndDelete(chatId);
+      if (!deletedChat) {
+        throw new Error("Chat not found");
+      }
+    },
+
+    addMessage: async (parent, { chatId, message_content }, context) => {
       const { user, io } = context;
 
       if (!user) {
@@ -169,8 +219,8 @@ const resolvers = {
         );
       }
 
-      if (!chatId || !content) {
-        throw new Error("Chat ID and content are required to send a message");
+      if (!chatId || !message_content) {
+        throw new Error("Chat ID and message_content are required to send a message");
       }
 
       if (!chatId.match(/^[0-9a-fA-F]{24}$/)) {
@@ -190,17 +240,17 @@ const resolvers = {
 
       // ✅ Save the new message
       const message = await Message.create({
-        sender: user._id,
-        content,
-        chat: chatId,
+        message_sender: user._id,
+        message_content,
+        chatRoom: chatId,
       });
 
       // ✅ Update latest message in chat
       chat.latestMessage = message._id;
       await chat.save();
 
-      // ✅ Populate sender info for real-time clients
-      const populatedMessage = await message.populate("sender", "username");
+      // ✅ Populate message_sender info for real-time clients
+      const populatedMessage = await message.populate("message_sender", "username");
 
       // ✅ Emit newMessage to this chat room
 
@@ -214,10 +264,10 @@ const resolvers = {
       io.to(chatId).emit("newMessage", {
         _id: populatedMessage._id,
         chatId,
-        content: populatedMessage.content,
-        sender: {
-          _id: populatedMessage.sender._id,
-          username: populatedMessage.sender.username,
+        message_content: populatedMessage.message_content,
+        message_sender: {
+          _id: populatedMessage.message_sender._id,
+          username: populatedMessage.message_sender.username,
         },
         createdAt: populatedMessage.createdAt,
       });

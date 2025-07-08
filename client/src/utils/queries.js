@@ -5,8 +5,9 @@ query users {
   users {
     _id
     username
-    email
+    user_email
     profile_picture
+    isOnline
   }
 }
 `;
@@ -19,16 +20,16 @@ query chatsByUser($userId: ID!) {
     users {
       _id
       username
-      email
+      user_email
       profile_picture
     }
     latestMessage {
       _id
-      content
-      sender {
+      message_content
+      message_sender {
         _id
         username
-        email
+        user_email
         profile_picture
       }
     }
@@ -37,27 +38,26 @@ query chatsByUser($userId: ID!) {
 `;
 
 export const GET_CHAT_MESSAGES = gql`
-query chatMessages($chatId: ID!) {
-messages(chatId: $chatId) {
-    _id
-    content
-    sender {
+  query chatMessages($chatId: ID!) {
+    messages(chatId: $chatId) {
       _id
-      username
-      email
-      profile_picture
-    }
-    chat {
-      _id
-      chat_name
-      users {
+      message_content
+      message_sender {
         _id
         username
-        email
+        user_email
         profile_picture
       }
+      chatRoom {
+        _id
+        chat_name
+        users {
+          _id
+          username
+          user_email
+          profile_picture
+        }
+      }
     }
-  
   }
-}
 `;

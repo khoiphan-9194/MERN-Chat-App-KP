@@ -2,29 +2,27 @@ const { Schema, model } = require("mongoose");
 
 const messageSchema = new Schema(
   {
-    sender: {
+    message_sender: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      // required: true,
+      required: true,
     },
     // this will be used to store the content of the message
-    content: {
+    message_content: {
       type: String,
       required: true,
       trim: true,
     },
     // this will be used to store the chat in which the message was sent
-    chat: {
+    chatRoom: {
       type: Schema.Types.ObjectId,
       ref: "Chat",
-      //required: true,
+      required: true,
     },
     createdAt: {
       type: Date,
       default: Date.now,
     },
-    
-
   },
   {
     timestamps: true,

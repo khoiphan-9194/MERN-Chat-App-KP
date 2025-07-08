@@ -10,7 +10,7 @@ const chatSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    users: [
+    users: [ // this will be used to store the users in the chat
       {
         type: Schema.Types.ObjectId,
         ref: "User",
@@ -30,10 +30,11 @@ const chatSchema = new Schema(
       type: Date,
       default: Date.now,
     },
+    wasSeen: {
+      type: Boolean,
+      default: false, // default to false, chat is not seen
+    },
     
-
-
-
   },
   {
     timestamps: true,
@@ -41,7 +42,10 @@ const chatSchema = new Schema(
       virtuals: true,
     },
   }
+
 );
+
+
 
 
 

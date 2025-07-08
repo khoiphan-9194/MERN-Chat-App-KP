@@ -16,14 +16,7 @@ import auth from "../utils/auth";
 function AuthPageComponent() {
   return (
     <main>
-      {auth.loggedIn() ? (
-        <div>
-          <h1>Welcome back!</h1>
-          <Link to={`/mychat/${auth.getProfile().data._id}`}>
-            Go to My Chat
-          </Link>
-        </div>
-      ) : (
+
         <div
           style={{
             display: "flex",
@@ -86,7 +79,7 @@ function AuthPageComponent() {
             </Box>
           </Container>
         </div>
-      )}
+   
     </main>
   );
 }

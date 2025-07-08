@@ -19,6 +19,7 @@ function MyChat({ userId, setCurrentChat }) {
   });
 
   const chats = data?.chatsByUser || [];
+  console.log("Fetched chats:", chats);
   const selectedChatIds = authUserInfo.selectedChats.map((chat) => chat._id);
 
   // ✅ Auto-add all fetched chats into context
@@ -130,8 +131,8 @@ useEffect(() => {
           >
             <Text fontWeight="bold">{chat.chat_name}</Text>
             <Text fontSize="sm">
-              <b>{chat.latestMessage?.sender?.username}:</b>{" "}
-              {chat.latestMessage?.content}
+              <b>{chat.latestMessage?.message_sender?.username}:</b>{" "}
+              {chat.latestMessage?.message_content}
             </Text>
           </Box>
         ))

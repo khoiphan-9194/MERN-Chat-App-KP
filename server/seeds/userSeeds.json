@@ -1,23 +1,23 @@
 [
   {
     "username": "tyler",
-    "email": "tyler@gmail.com",
+    "user_email": "tyler@gmail.com",
     "password": "123456"
     
   },
   {
     "username": "jessica",
-    "email": "jessica@gmail.com",
+    "user_email": "jessica@gmail.com",
     "password": "123456"
   },
   {
     "username": "john",
-    "email": "john@yahoo.com",
+    "user_email": "john@yahoo.com",
     "password": "123456"
   },
   {
     "username": "sarah",
-    "email": "sarah@aol.com",
+    "user_email": "sarah@aol.com",
     "password":"123456"
   }
 ]

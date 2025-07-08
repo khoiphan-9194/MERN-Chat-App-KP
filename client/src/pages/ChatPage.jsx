@@ -14,8 +14,8 @@ function ChatPage() {
 
   useEffect(() => {
     if (auth.loggedIn()) {
-      const { _id: userId, username, email } = auth.getProfile().data;
-      updateUserInfo({ userId, username, email });
+      const { _id: userId, username, user_email } = auth.getProfile().data;
+      updateUserInfo({ userId, username, user_email });
     }
   }, [updateUserInfo]);
 

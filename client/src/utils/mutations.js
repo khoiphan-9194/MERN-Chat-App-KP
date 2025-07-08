@@ -1,13 +1,13 @@
 import { gql } from '@apollo/client';
 
 export const USER_LOGIN = gql`
-  mutation login($email: String!, $password: String!) {
-    login(email: $email, password: $password) {
+  mutation login($user_email: String!, $password: String!) {
+    login(user_email: $user_email, password: $password) {
       token
       user {
         _id
         username
-        email
+        user_email
        
       }
     }
@@ -15,13 +15,13 @@ export const USER_LOGIN = gql`
 `;
 
 export const USER_SIGNUP = gql`
-  mutation addUser($username: String!, $email: String!, $password: String!) {
-    addUser(username: $username, email: $email, password: $password) {
+  mutation addUser($username: String!, $user_email: String!, $password: String!) {
+    addUser(username: $username, user_email: $user_email, password: $password) {
       token
       user {
         _id
         username
-        email
+        user_email
        
       }
     }
@@ -29,13 +29,16 @@ export const USER_SIGNUP = gql`
 `;
 
 export const SEND_MESSAGE = gql`
-  mutation addMessage($chatId: ID!, $content: String!) {
-    addMessage(chatId: $chatId, content: $content) {
+  mutation addMessage($chatId: ID!, $message_content: String!) {
+    addMessage(chatId: $chatId, message_content: $message_content) {
       _id
-      content
-      sender {
+      message_content
+      message_sender {
         _id
         username
+      }
+      chatRoom {
+        chat_name
       }
     }
   }
@@ -52,8 +55,8 @@ mutation createChat ($chat_name: String!, $users: [ID!]!) {
     }
     latestMessage {
       _id
-      content
-      sender {
+      message_content
+      message_sender {
         _id
         username
       }

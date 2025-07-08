@@ -22,8 +22,15 @@ db.once('open', async () => {
   const chats = await Chat.insertMany(chatData);
   console.log('chats seeded!');
 
+  // assign a random message_sender and chatRoom to each message before inserting
+  const messageDataWithSender = messageData.map(msg => {
+    const randomUser = users[Math.floor(Math.random() * users.length)];
+    const randomChat = chats[Math.floor(Math.random() * chats.length)];
+    return { ...msg, message_sender: randomUser._id, chatRoom: randomChat._id };
+  });
+  
   // create messages
-  const messages = await Message.insertMany(messageData);
+  const messages = await Message.insertMany(messageDataWithSender);
   console.log('messages seeded!');
 
 
@@ -47,20 +54,27 @@ db.once('open', async () => {
   console.log('chats updated with users!');
 
   // associate messages with chats and users
-  for (const message of messages) {
+  for (const messageObj of messages) {
+    // Convert plain object to a Mongoose document
+    const message = await Message.findById(messageObj._id);
+    if (!message) continue;
+
     const randomChat = chats[Math.floor(Math.random() * chats.length)];
-    message.chat = randomChat._id;
+    message.chatRoom = randomChat._id; // assign the chat to the message
+
     const getChatData = await Chat.findById(randomChat._id).populate('users'); // populate the users in the chat
-    console.log(getChatData);
+    if (!getChatData || !getChatData.users || !getChatData.users.length) {
+      console.error('No users found for chat:', randomChat._id);
+      continue;
+    }
+
     const randomSender = getChatData.users[Math.floor(Math.random() * getChatData.users.length)];
-    
-    message.sender = randomSender._id;
+    message.message_sender = randomSender._id;
+
     // lastMessage is the latest message in the chat
     getChatData.latestMessage = message._id; // update the latest message in the chat
     await getChatData.save(); // save the chat with the latest message
     await message.save();
-
-
   }
 
 
