@@ -19,11 +19,27 @@ const messageSchema = new Schema(
       ref: "Chat",
       //required: true,
     },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+    
+
   },
   {
     timestamps: true,
   }
 );
+// This will allow us to use virtuals in the message model
+// messageSchema.set("toJSON", {
+//   virtuals: true,
+//   versionKey: false,
+//   transform: (doc, ret) => {
+//     // Remove the _id field from the response
+//     ret.id = ret._id;
+//     delete ret._id;
+//   },
+// });
 
 const Message = model("Message", messageSchema);
 

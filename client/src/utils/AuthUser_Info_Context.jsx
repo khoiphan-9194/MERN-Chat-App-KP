@@ -1,5 +1,7 @@
 import { createContext, useState, useContext, useEffect } from "react";
 import socket from "./socket-client";
+import auth from "./auth";
+import AuthPageComponent from "../pages/AuthPageComponent";
 
 
 
@@ -112,22 +114,29 @@ const AuthenUserInfoProvider = ({ children }) => {
   }, [authUserInfo.user]);
 
 
-  return (
-    <AuthUser_Info_Context.Provider
-      value={{
-        authUserInfo,
-        setAuthUserInfo,
-        updateUserInfo,
-        updateSelectedChat, // To add one chat
-        updateSelectedChats, // To replace entire chat list
-        resetAuthUserInfo,
-        isLastestMessage,
-        setIsLastMessage,
-      }}
-    >
-      {children}
-    </AuthUser_Info_Context.Provider>
-  );
+
+    return (
+      auth.loggedIn() ? (
+        <AuthUser_Info_Context.Provider
+          value={{
+            authUserInfo,
+            setAuthUserInfo,
+            updateUserInfo,
+            updateSelectedChat,
+            updateSelectedChats,
+            resetAuthUserInfo,
+            isLastestMessage,
+            setIsLastMessage,
+          }}
+        >
+          {children}
+        </AuthUser_Info_Context.Provider>
+      ) : (
+        <AuthPageComponent />
+      )
+    );
+  
+ 
 };
 
 export default AuthenUserInfoProvider;
@@ -152,4 +161,29 @@ export default AuthenUserInfoProvider;
       });
     }
   };
+*/
+
+
+
+/*
+return (
+    auth.loggedIn() ? (
+      <AuthUser_Info_Context.Provider
+        value={{
+          authUserInfo,
+          setAuthUserInfo,
+          updateUserInfo,
+          updateSelectedChat,
+          updateSelectedChats,
+          resetAuthUserInfo,
+          isLastestMessage,
+          setIsLastMessage,
+        }}
+      >
+        {children}
+      </AuthUser_Info_Context.Provider>
+    ) : (
+      <div>Please log in to access this feature.</div>
+    )
+  );
 */
