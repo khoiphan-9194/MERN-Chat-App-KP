@@ -4,15 +4,23 @@ import { Form, Button, Alert, Modal } from 'react-bootstrap';
 import { useMutation } from '@apollo/client';
 import { USER_SIGNUP } from '../utils/mutations';
 import Auth from '../utils/auth';
+import axios from "axios";
 
 const Signup = () => {
   // set initial form state
-  const [userFormData, setUserFormData] = useState({ username: '', user_email: '', password: '' });
+  const [userFormData, setUserFormData] = useState({
+    username: "",
+    user_email: "",
+    password: "",
+    profile_picture: ""
+  });
   const [signedUpusername, setSignedUpusername] = useState('');
   // set state for form validation
   const [validated] = useState(false);
   // set state for alert
   const [showAlert, setShowAlert] = useState(false);
+  const [newPostImage, setNewPostImage] = useState(null);
+  const [newPostImageName, setNewPostImageName] = useState("");
 
   // SETUP THE ADD_USER MUTATION
   const [addUser, { error, data }] = useMutation(USER_SIGNUP);
@@ -23,15 +31,53 @@ const Signup = () => {
   }
 
 
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    console.log(file);
+    if (!file) return;
+    setNewPostImage(file);
+    setNewPostImageName(file.name);
+    console.log(file.name);
+
+    console.log(newPostImage);
+    console.log(newPostImageName);
+  };
+
+  const uploadImage = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append("file", newPostImage);
+    console.log(formData);
+    axios
+      .post(`http://localhost:3001/upload/single`, formData)
+
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+
   const handleFormSubmit = async (event) => {
     event.preventDefault();
     console.log(userFormData);
     // check if form has everything (as per react-bootstrap docs)
     try {
+      await uploadImage(event);
 
   
       const { data } = await addUser({
-        variables: { ...userFormData },
+        variables: {
+          username: userFormData.username,
+          user_email: userFormData.user_email,
+          password: userFormData.password,
+          profile_picture: newPostImageName
+            ? `/userAvatar/${newPostImageName}`.trim()
+            : "/assets/default-avatar.jpg",
+        },
       });
 
       console.log(data);
@@ -66,17 +112,14 @@ const Signup = () => {
       username: "",
       user_email: "",
       password: "",
+      profile_picture: "",
     });
+    setNewPostImage(null);
+    setNewPostImageName("");
+
 
 
   };
-
-  const handleClose = () => {
-    setSignedUpusername('');
-    // If you are using a Modal, control its visibility with state instead of Modal.hide()
-    // For now, this just resets the signedUpusername
-  }
-
 
 
   
@@ -125,7 +168,7 @@ const Signup = () => {
                 <Form.Group className="mb-3">
                   <Form.Label htmlFor="email">Email</Form.Label>
                   <Form.Control
-                    type="email" // Ensure email type for validation
+                    type="email"
                     placeholder="Your email address"
                     name="user_email"
                     onChange={handleInputChange}
@@ -151,6 +194,41 @@ const Signup = () => {
                     Password is required!
                   </Form.Control.Feedback>
                 </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label htmlFor="profile_picture">Profile Picture</Form.Label>
+                  <Form.Control
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="form-control"
+                    style={{
+                      background: "#23272f",
+                      border: "2px solid #a78bfa",
+                      color: "#fff",
+                      borderRadius: "1.5rem",
+                      fontSize: "1.15rem",
+                      padding: "1rem",
+                    }}
+                  />
+                  {newPostImageName && (
+                    <div className="text-center mt-4">
+                      <img
+                        style={{
+                          width: "85%",
+                          borderRadius: "1.2rem",
+                          boxShadow: "0 2px 16px #6a11cb55",
+                          border: "2.5px solid #fbbf24",
+                          marginBottom: "0.7rem",
+                        }}
+                        src={URL.createObjectURL(newPostImage)}
+                        alt={newPostImageName}
+                      />
+                      <div style={{ color: "black", fontSize: "1.05rem" }}>{newPostImageName}</div>
+                    </div>
+                  )}
+                </Form.Group>
+
                 <Button
                   disabled={
                     !(

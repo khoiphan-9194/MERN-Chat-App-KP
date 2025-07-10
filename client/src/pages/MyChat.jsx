@@ -5,7 +5,7 @@ import auth from "../utils/auth";
 import { Box, Text } from "@chakra-ui/react";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 import socket from "../utils/socket-client"; // Import the Socket.IO client instance
-
+import { displayTime } from "../utils/helpers";
 
 
 
@@ -110,12 +110,15 @@ useEffect(() => {
     <Box
       bg="gray.700"
       borderRadius="md"
-      boxShadow="md"
       maxW="400px"
       mx="auto"
       w="100%"
       p="4"
       color="white"
+      height="450px"
+      overflowY="auto" // This will allow scrolling down if there are many chats
+      border={"3px solid rgb(28, 99, 222,0.5)"} // Optional: Add a border for better visibility
+      boxShadow="3px 3px 10px rgba(232, 241, 248, 0.5)" // Optional: Add a shadow for better visibility
     >
       {chats.length > 0 ? (
         chats.map((chat) => (
@@ -124,7 +127,7 @@ useEffect(() => {
             p="3"
             mb="2"
             bg="gray.600"
-            borderRadius="md"
+            borderRadius="10px"
             cursor="pointer"
             _hover={{ bg: "teal.500" }}
             onClick={() => handleViewChat(chat)}
@@ -134,7 +137,9 @@ useEffect(() => {
               <b>{chat.latestMessage?.message_sender?.username}:</b>{" "}
               {chat.latestMessage?.message_content}
             </Text>
+         
           </Box>
+          
         ))
       ) : (
         <Text>No chats found.</Text>
@@ -164,3 +169,21 @@ export default MyChat;
     //     joinedChatIds.current.add(chat._id);
     //   }
     // });
+    
+    
+    
+    /*
+    
+       <Text
+              fontSize="2xs"
+              color="gray.400"
+              fontFamily="sans-serif"
+              letterSpacing="wider"
+              fontStyle="normal"
+              lineHeight="shorter"
+            >
+              {chat.latestMessage?.createdAt && (
+                <span>{displayTime(chat.latestMessage.createdAt)}</span>
+              )}
+            </Text>
+    */

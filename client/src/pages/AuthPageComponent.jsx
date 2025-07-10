@@ -37,8 +37,9 @@ function AuthPageComponent() {
               borderWidth={1}
               bg="whiteAlpha.900"
             >
-              <Text fontSize="4xl" textAlign="center" mt={4}>
-                Chat APP
+            <Text fontSize="4xl" textAlign="center" mt={4}
+              fontFamily="'Caveat', cursive">
+                TALK-ATIVE
               </Text>
             </Box>
 

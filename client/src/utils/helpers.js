@@ -16,13 +16,20 @@ export function removeHyphensAndCapitalize(string) {
 
 }
 
-export function displayTimeDashBoard()
+export function displayTime()
 {
-var rightNow = dayjs().format('MMM DD, YYYY [at] hh:mm:ss a');
+var rightNow = dayjs().format('MMM DD, YYYY [at] hh:mm a');
 
-setInterval(displayTimeDashBoard,1000);
+setInterval(displayTime, 1000);
 return rightNow;
 
+}
+
+export function displayTimeDashBoard() {
+  var rightNow = dayjs().format("MMM DD, YYYY [at] hh:mm:ss a");
+
+  setInterval(displayTimeDashBoard, 1000);
+  return rightNow;
 }
 
 

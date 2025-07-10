@@ -8,6 +8,7 @@ function Homepage() {
   
   const loggedIn = auth.loggedIn();
   const username = loggedIn ? auth.getProfile().data.username : "";
+  const profile_picture = loggedIn ? auth.getProfile().data.profile_picture : "";
 
     const { resetAuthUserInfo } = useAuthUserInfo();
     const handleLogout = () => {
@@ -27,29 +28,48 @@ function Homepage() {
     >
       <VStack
         spacing={10}
-        maxW="xl"
-        padding={12}
+        maxW="2xl"
+        padding={16}
         borderRadius="2xl"
         bg="white"
         boxShadow="2xl"
         textAlign="center"
       >
         <Heading
-          fontSize="5xl"
+          fontSize="6xl"
           color="teal.600"
           fontFamily="'Caveat', cursive"
           lineHeight="short"
         >
           {loggedIn ? `Hello, ${username}! 🎉` : "Welcome to ChatterBox 💬"}
         </Heading>
+        {loggedIn && (
+          <Box display="flex" justifyContent="center" width="100%">
+            <img
+              src={profile_picture}
+              alt="Profile"
+              style={{
+                width: "20rem",
+                height: "20rem",
+                borderRadius: "50%",
+                objectFit: "cover",
+                boxShadow: "0 4px 8px rgba(0, 0,0, 0.1)",
+                border: "4px solid #38B2AC",
+                marginTop: "1rem",
+                marginBottom: "1rem",
+                display: "block",
+              }}
+            />
+          </Box>
+        )}
 
-        <Text fontSize="xl" color="gray.700" fontWeight="medium">
+        <Text fontSize="2xl" color="gray.700" fontWeight="medium">
           {loggedIn
             ? "Dive back into your conversations and keep the good times rolling! 🚀"
             : "Chat, connect, and create memories — all in one place."}
         </Text>
 
-        <Stack spacing={6} width="100%">
+        <Stack spacing={8} width="100%">
           {loggedIn ? (
             <>
               <Button
@@ -58,18 +78,17 @@ function Homepage() {
                 colorScheme="teal"
                 size="lg"
                 fontWeight="bold"
-                paddingY={7}
-                fontSize="xl"
+                paddingY={8}
+                fontSize="2xl"
               >
                 Go to My Chats 💌
               </Button>
               
               <Button
-               
                 size="lg"
                 fontWeight="bold"
-                paddingY={7}
-                fontSize="xl"
+                paddingY={8}
+                fontSize="2xl"
                 onClick={handleLogout}
                 background={"red.400"}
               >
@@ -84,8 +103,8 @@ function Homepage() {
                 colorScheme="teal"
                 size="lg"
                 fontWeight="bold"
-                paddingY={7}
-                fontSize="xl"
+                paddingY={8}
+                fontSize="2xl"
               >
                 Login to Chat 🗨️
               </Button>
@@ -95,8 +114,8 @@ function Homepage() {
                 colorScheme="teal"
                 size="lg"
                 fontWeight="bold"
-                paddingY={7}
-                fontSize="xl"
+                paddingY={8}
+                fontSize="2xl"
               >
                 Sign Up for Free 🎉
               </Button>

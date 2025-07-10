@@ -42,6 +42,9 @@ const AuthenUserInfoProvider = ({ children }) => {
           user: {
             userId: newUser.userId,
             username: newUser.username,
+            user_email: newUser.user_email,
+            profile_picture: newUser.profile_picture || "/assets/default-avatar.jpg", // Default avatar if
+           
           },
         };
       });
@@ -112,6 +115,8 @@ const AuthenUserInfoProvider = ({ children }) => {
     }
     console.log("Socket connection status:", socket.connected);
   }, [authUserInfo.user]);
+
+  
 
 
 

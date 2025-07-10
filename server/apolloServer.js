@@ -6,6 +6,11 @@ const { authMiddleware } = require("./utils/auth");
 const socketIO = require("socket.io");
 const http = require("http");
 const socketController = require("./utils/socketController");
+const multer = require("multer"); // this is for file upload, what it does is it creates a storage engine that stores the file in the destination you specify
+const cors = require("cors"); // this is for cross-origin resource sharing, what it does is it allows you to specify which domains are allowed to access your resources, and what methods and headers are permitted.
+// cross-origin resource sharing (CORS) is a mechanism that helps you manage how your web application interacts with resources from different origins. It allows you to specify which domains are allowed to access your resources, and what methods and headers are permitted.
+// and it is a security feature implemented by web browsers to prevent malicious websites from making requests to your server on behalf of the user.
+
 
 const { typeDefs, resolvers } = require("./schemas");
 const db = require("./config/connection");
@@ -41,6 +46,7 @@ const startApolloServer = async () => {
 
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
+  app.use(cors());
 
   app.use(
     "/graphql",
@@ -50,6 +56,33 @@ const startApolloServer = async () => {
       },
     })
   );
+
+  
+  // multer.diskStorage is a method that creates a storage engine that stores the file in the destination you specify
+  // multer is a middleware for handling multipart/form-data, which is used for uploading files
+  const storage_1 = multer.diskStorage({
+    destination: (req, file, cb) => {
+      return cb(null, path.join(__dirname, "../client/public/userAvatar"));
+      // or   return cb(null, '../client/dist/uploads'); if you're using the production build
+    },
+    filename: (req, file, cb) => {
+      return cb(null, `${file.originalname}`);
+    },
+  });
+
+  // multer.diskStorage is a method that creates a storage engine that stores the file in the destination you specify
+  // multer is a middleware for handling multipart/form-data, which is used for uploading files
+
+  const upload_singleImage = multer({ storage: storage_1 });
+
+  // This endpoint handles single file uploads
+  app.post("/upload/single", upload_singleImage.single("file"), (req, res) => {
+    console.log(req.body);
+    console.log(req.file);
+    res.json({ message: "File uploaded successfully", file: req.file });
+  });
+
+
 
   if (process.env.NODE_ENV === "production") {
     app.use(express.static(path.join(__dirname, "../client/dist")));

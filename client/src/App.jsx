@@ -7,6 +7,7 @@ import {
 import { setContext } from "@apollo/client/link/context";
 import { Outlet } from "react-router-dom";
 
+
 import CustomThemeProvider from "./utils/CustomThemeContext";
 import AuthenUserInfoProvider from "./utils/AuthUser_Info_Context";
 
@@ -39,6 +40,8 @@ function App() {
         {/* This provider can be used to manage user info across the app */}
         <CustomThemeProvider>
           <Outlet />
+
+
         </CustomThemeProvider>
       </AuthenUserInfoProvider>
     </ApolloProvider>

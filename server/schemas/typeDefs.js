@@ -40,7 +40,7 @@ type Query {
 }
 
 type Mutation {
-  addUser(username: String!, user_email: String!, password: String!): Auth
+  addUser(username: String!, user_email: String!, password: String!, profile_picture: String!): Auth
   updateUser(_id: ID!, username: String, user_email: String, password: String, profile_picture: String): User
   login(user_email: String!, password: String!): Auth
   createChat(chat_name: String!, users: [ID!]!): Chat

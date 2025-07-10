@@ -32,6 +32,7 @@ query chatsByUser($userId: ID!) {
         user_email
         profile_picture
       }
+      createdAt
     }
   }
 }

@@ -14,8 +14,8 @@ function ChatPage() {
 
   useEffect(() => {
     if (auth.loggedIn()) {
-      const { _id: userId, username, user_email } = auth.getProfile().data;
-      updateUserInfo({ userId, username, user_email });
+      const { _id: userId, username, user_email, profile_picture } = auth.getProfile().data;
+      updateUserInfo({ userId, username, user_email, profile_picture });
     }
   }, [updateUserInfo]);
 
@@ -36,7 +36,8 @@ function ChatPage() {
               padding="1rem"
             >
               {/* My Chat List */}
-              <Box flex={0.3} bg="whiteAlpha.900" p={4} borderRadius="lg">
+              <Box flex={0.3} bg="whiteAlpha.500" p={5} borderRadius="lg"
+              >
                 <Text fontSize="2xl" textAlign="center">
                   My Chat
                 </Text>
@@ -49,14 +50,23 @@ function ChatPage() {
               {/* Active Chat Messages */}
               <Box
                 flex={1}
-                bg="whiteAlpha.900"
+                bg="whiteAlpha.400"
                 p={4}
                 borderRadius="lg"
                 overflowY="auto"
+
+
               >
                 {currentChat ? (
                   <>
-                    <Text fontSize="xl" textAlign="center" mb={2}>
+                    <Text  textAlign="center" mb={2}
+                      style={{
+                        fontWeight: "bold",
+                        color: "#333",
+                        fontSize: "1.5rem",
+                        textTransform: "uppercase",
+                        letterSpacing: "1px",
+                      }}>
                       {currentChat.chat_name}
                     </Text>
                     <ChatMessage chatId={currentChat._id} />

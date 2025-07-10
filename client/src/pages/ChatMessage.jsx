@@ -93,8 +93,8 @@ function ChatMessage({ chatId })
         maxHeight: "500px",
         border: "1px solid #e0e0e0",
         borderRadius: "10px",
-        background: "#f5f7fb",
-        overflow: "hidden",
+        background: "rgba(255, 255, 255, 0.5)",  
+        overflow: "hidden", //overflow hidden to prevent scrollbars, meaning  
         boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
       }}
     >

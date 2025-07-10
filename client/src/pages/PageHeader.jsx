@@ -11,10 +11,13 @@ import {
 import UserList from "./UserList";
 import auth from "../utils/auth";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
+import AvatarDropDownMenu from "../components/AvatarDropDownMenu";
+import { Link } from "react-router-dom";
+import DateTime from "../components/Date";
 
 //rfce
 function PageHeader() {
-  const { resetAuthUserInfo } = useAuthUserInfo();
+  const { resetAuthUserInfo, authUserInfo } = useAuthUserInfo();
   const handleLogout = () => {
     resetAuthUserInfo();
     auth.logout();
@@ -23,7 +26,14 @@ function PageHeader() {
 
   return (
     <>
-      <Box flex="1" bg="whiteAlpha.900" p={4}>
+      <Box
+        flex="1"
+        bg="whiteAlpha.600"
+        p={4}
+        style={{
+          borderRadius: "40px",
+        }}
+      >
         <Stack
           direction="row"
           spacing={5}
@@ -33,7 +43,7 @@ function PageHeader() {
           <HStack wrap="wrap">
             <Drawer.Root placement="start">
               <Drawer.Trigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="none" size="lg">
                   Search User 🔍
                 </Button>
               </Drawer.Trigger>
@@ -75,13 +85,60 @@ function PageHeader() {
                 </Drawer.Positioner>
               </Portal>
             </Drawer.Root>
+
+            <Box
+              px={6}
+              py={3}
+              margin={"0 0 0 30px"}
+ 
+              borderRadius="20px"
+              boxShadow="lg"
+              display="flex"
+              alignItems="center"
+              minW="240px"
+              gap={3}
+              border="2px solid"
+              borderColor="whiteAlpha.500"
+
+            >
+           
+              <DateTime />
+            </Box>
           </HStack>
 
-          <Text fontSize="5xl" fontWeight="bold" color="blackAlpha.900">
-            Chat App
-          </Text>
+          <Link
+            to="/"
+            style={{
+              textDecoration: "none",
+            }}
+          >
+            <Text
+              fontSize="5xl"
+              fontWeight="bold"
+              color="blackAlpha.900"
+              fontFamily="'Caveat', cursive"
+            >
+              TALK-ATIVE
+            </Text>
+          </Link>
 
-          <Button variant="outline-secondary"
+          <AvatarDropDownMenu
+            username={auth.getProfile().data.username}
+            profile_picture={authUserInfo.user?.profile_picture}
+            logout={handleLogout}
+          />
+        </Stack>
+      </Box>
+    </>
+  );
+}
+
+export default PageHeader;
+
+
+
+/*
+     <Button variant="outline-secondary"
           onClick={() => {
             handleLogout();
           }}
@@ -90,10 +147,4 @@ function PageHeader() {
               🚪 Logout
             </span>
           </Button>
-        </Stack>
-      </Box>
-    </>
-  );
-}
-
-export default PageHeader;
+*/
