@@ -10,9 +10,22 @@ const resolvers = {
     users: async () => {
       return User.find().select("-__v -password");
     },
-    user: async (parent, { _id }) => {
-      return User.findById(_id).select("-__v -password");
+
+    user: async (parent, { userId }) => {
+      if (!userId) {
+        throw new Error("User ID is required to fetch user details");
+      }
+      if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new Error("Invalid user ID format");
+      }
+      // Validate user ID
+      const user = await User.findById(userId).select("-__v -password");
+      if (!user) {
+        throw new Error("User not found");
+      }
+      return user;
     },
+
     chats: async () => {
       return Chat.find()
         .populate("users", "-__v -password")
@@ -104,7 +117,7 @@ const resolvers = {
         username,
         user_email,
         password,
-        profile_picture
+        profile_picture,
       });
       const token = signToken(user);
       return { token, user };
@@ -142,6 +155,26 @@ const resolvers = {
         throw new Error("User not found");
       }
       return update_user;
+    },
+
+    verifyCurrentUserPassword: async (
+      parent,
+      { userId, currentPassword },
+      context
+    ) => {
+      if (context.user) {
+        const user = await User.findById(userId);
+        if (!user) {
+          throw new AuthenticationError();
+        }
+        const isValid = await user.isCorrectPassword(currentPassword);
+        if (!isValid) {
+          return false;
+        }
+        return true;
+      }
+
+      throw new AuthenticationError();
     },
 
     createChat: async (parent, { chat_name, users }, context) => {
@@ -253,7 +286,14 @@ const resolvers = {
         throw new Error("Chat not found");
       }
 
-      const isFirstMessage = !chat.latestMessage; // ✅ Check BEFORE saving
+      const isFirstMessage = !chat.latestMessage; // when creating a new chat, latestMessage will be null
+      // what isFirstMessage does is that it will check if the chat has a latest message or not,
+      // if it does, it means that the chat already exists and we are adding a new message to it,
+      // if it doesn't, it means that we are creating a new chat and
+      // we need to emit the new chat room to all users in the chat room
+      // so that they can receive the new chat room in real-time without having to refresh the page
+      // !chat.latestMessage same as chat.latestMessage === null  
+
 
       if (!chat.users.includes(user._id)) {
         throw new Error("You are not a member of this chat");
@@ -299,7 +339,8 @@ const resolvers = {
         `✅ Resolver New message sent to chat ${chatId}:`,
         populatedMessage
       );
-
+      // Emit to all users in the chat room
+      // This is to notify all users in the chat room that a new message has been sent
       if (isFirstMessage) {
         for (const userId of chat.users) {
           if (userId.toString() !== user._id.toString()) {
@@ -309,14 +350,92 @@ const resolvers = {
         }
       }
 
+
       return populatedMessage;
     },
   },
 };
+
+
 
  
 
 
 
 
- module.exports = resolvers;
+module.exports = resolvers;
+ 
+/*
+addMessage: async (parent, { chatId, message_content }, context) => {
+  const { user, io } = context;
+
+  // 1. Authentication check
+  if (!user) {
+    throw new AuthenticationError("You need to be logged in to send a message.");
+  }
+
+  // 2. Input validation
+  if (!chatId?.match(/^[0-9a-fA-F]{24}$/)) {
+    throw new Error("Invalid chat ID format.");
+  }
+  if (!message_content || message_content.trim() === "") {
+    throw new Error("Message content cannot be empty.");
+  }
+
+  // Optional: Limit message length
+  if (message_content.length > 1000) {
+    throw new Error("Message is too long. Maximum 1000 characters allowed.");
+  }
+
+  // 3. Chat existence and permission check
+  const chat = await Chat.findById(chatId);
+  if (!chat) {
+    throw new Error("Chat not found.");
+  }
+  if (!chat.users.includes(user._id)) {
+    throw new Error("You are not a member of this chat.");
+  }
+
+  // 4. Check if it's the first message in the chat
+  const isFirstMessage = !chat.latestMessage;
+
+  // 5. Save the new message
+  const message = await Message.create({
+    message_sender: user._id,
+    message_content: message_content.trim(),
+    chatRoom: chatId,
+  });
+
+  // 6. Update the chat's latest message
+  chat.latestMessage = message._id;
+  await chat.save();
+
+  // 7. Populate message sender info
+  const populatedMessage = await message.populate("message_sender", "username");
+
+  // 8. Emit the new message to the chat room
+  io.to(chatId).emit("newMessage", {
+    _id: populatedMessage._id,
+    chatId,
+    message_content: populatedMessage.message_content,
+    message_sender: {
+      _id: populatedMessage.message_sender._id,
+      username: populatedMessage.message_sender.username,
+    },
+    createdAt: populatedMessage.createdAt,
+  });
+
+  console.log(`✅ New message sent to chat ${chatId}:`, populatedMessage);
+
+  // 9. If first message, notify other users of new chat room
+  if (isFirstMessage) {
+    for (const userId of chat.users) {
+      if (userId.toString() !== user._id.toString()) {
+        io.to(userId.toString()).emit("newChatRoom", chat);
+        console.log(`✅ Notified User ${userId} of new chat room.`);
+      }
+    }
+  }
+
+  return populatedMessage;
+}

@@ -32,7 +32,7 @@ type Auth {
 }
 type Query {
   users: [User]
-  user(_id: ID!): User
+  user(userId: ID!): User
   chats: [Chat]
   chatsByUser(userId: ID!): [Chat]
   chat(_id: ID!): Chat
@@ -47,6 +47,7 @@ type Mutation {
   addMessage(chatId: ID!, message_content: String!): Message
   updateChat(chatId: ID!, chat_name: String, users: [ID!]): Chat
   deleteChat(chatId: ID!): Chat
+  verifyCurrentUserPassword(userId: ID!, currentPassword: String!): Boolean
  
 }
 `;

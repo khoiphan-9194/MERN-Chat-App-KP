@@ -4,7 +4,9 @@ import App from "./App";
 import Homepage from "./pages/Homepage";
 import ChatPage from "./pages/ChatPage";
 import ChatMessage from "./pages/ChatMessage";
+import MyChat from "./pages/MyChat";
 import Error from "./pages/Error";
+import ProfileSetting from "./pages/ProfileSetting";
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
 
 
@@ -29,9 +31,19 @@ const router = createBrowserRouter([
         element: <ChatPage />,
       },
       {
-        path: "/chat/messages/:chatId",
+        path: "/mychat/:chatId",
+        element: <MyChat />,
+      },
+      {
+        path: "/mychat/:userId/:chatId",
         element: <ChatMessage />,
       },
+      {
+        path: "/settings/:userId",
+        element: <ProfileSetting />,
+      },
+ 
+
     ],
   },
 ]);

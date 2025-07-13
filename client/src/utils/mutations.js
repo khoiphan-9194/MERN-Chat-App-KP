@@ -64,3 +64,24 @@ mutation createChat ($chat_name: String!, $users: [ID!]!) {
   }
 }
 `;
+
+
+export const VERIFY_CURRENT_PASSWORD = gql`
+  mutation verifyCurrentUserPassword($userId: ID!, $currentPassword: String!) {
+    verifyCurrentUserPassword(
+      userId: $userId
+      currentPassword: $currentPassword
+    )
+  }
+`;
+
+export const UPDATE_USER_PROFILE = gql`
+  mutation updateUser($userId: ID!, $username: String, $user_email: String, $password: String, $profile_picture: String) {
+    updateUser(_id: $userId, username: $username, user_email: $user_email, password: $password, profile_picture: $profile_picture) {
+      _id
+      username
+      user_email
+      profile_picture
+    }
+  }
+`;  

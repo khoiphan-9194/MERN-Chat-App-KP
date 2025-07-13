@@ -9,15 +9,10 @@ import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 function ChatPage() {
   
 
-  const { authUserInfo, updateUserInfo } = useAuthUserInfo();
+  const { authUserInfo } = useAuthUserInfo();
   const [currentChat, setCurrentChat] = useState(null);
 
-  useEffect(() => {
-    if (auth.loggedIn()) {
-      const { _id: userId, username, user_email, profile_picture } = auth.getProfile().data;
-      updateUserInfo({ userId, username, user_email, profile_picture });
-    }
-  }, [updateUserInfo]);
+ 
 
   return (
     <main>

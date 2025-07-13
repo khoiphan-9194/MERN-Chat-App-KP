@@ -1,7 +1,7 @@
 import { createContext, useState, useContext, useEffect } from "react";
 import socket from "./socket-client";
 import auth from "./auth";
-import AuthPageComponent from "../pages/AuthPageComponent";
+import AuthPageComponent from "../UI/AuthPageComponent";
 
 
 
@@ -116,10 +116,28 @@ const AuthenUserInfoProvider = ({ children }) => {
     console.log("Socket connection status:", socket.connected);
   }, [authUserInfo.user]);
 
+
+
+  //  run this effect specifically when the token changes, 
+  //  then you should extract the token to state or context and use it like this:
+
+const token = auth.getToken();
+
+useEffect(() => {
+  if (!token) {
+    console.error("No token found");
+    return;
+  }
+
+  const profile = auth.getProfile();
+  if (profile?.data) {
+    const { _id: userId, username, user_email, profile_picture } = profile.data;
+    updateUserInfo({ userId, username, user_email, profile_picture });
+  }
+}, [token, updateUserInfo, authUserInfo]);
+
   
-
-
-
+  
     return (
       auth.loggedIn() ? (
         <AuthUser_Info_Context.Provider

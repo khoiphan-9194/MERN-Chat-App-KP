@@ -39,6 +39,7 @@ socketController(io);
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+
 });
 
 const startApolloServer = async () => {

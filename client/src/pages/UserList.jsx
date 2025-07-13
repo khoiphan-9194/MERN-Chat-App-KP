@@ -123,7 +123,7 @@ const filteredUsers =
       try {
         const { data: mutationData } = await createChat({
           variables: {
-            chat_name: `Chat with ${username}`,
+            chat_name: `${authUserInfo.user?.username} & ${username}`,
             users: [userId],
           },
           refetchQueries: [

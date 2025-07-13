@@ -50,6 +50,17 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+ // this middleware is used to hash the password before updating the owner document
+userSchema.pre('findOneAndUpdate', async function (next) {
+  const update = this.getUpdate();
+  if (update.password) {
+    const saltRounds = 10;
+    update.password = await bcrypt.hash(update.password, saltRounds);
+  }
+  next();
+});
+
+
 // custom method to compare and validate password for logging in
 userSchema.methods.isCorrectPassword = async function (password) {
   return bcrypt.compare(password, this.password);

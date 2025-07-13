@@ -62,3 +62,15 @@ export const GET_CHAT_MESSAGES = gql`
     }
   }
 `;
+
+export const QUERY_SINGLE_USER = gql`
+query user($userId: ID!) {
+user(userId: $userId) {
+  _id
+  username
+  user_email
+  profile_picture
+  isOnline
+}
+}
+`;

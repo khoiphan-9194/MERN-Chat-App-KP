@@ -46,8 +46,8 @@ function Homepage() {
         {loggedIn && (
           <Box display="flex" justifyContent="center" width="100%">
             <img
-              src={profile_picture}
-              alt="Profile"
+              src={`${profile_picture}`}
+              alt={`${username}'s avatar`}
               style={{
                 width: "20rem",
                 height: "20rem",

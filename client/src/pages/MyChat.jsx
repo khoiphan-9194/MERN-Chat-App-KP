@@ -116,9 +116,9 @@ useEffect(() => {
       p="4"
       color="white"
       height="450px"
-      overflowY="auto" // This will allow scrolling down if there are many chats
-      border={"3px solid rgb(28, 99, 222,0.5)"} // Optional: Add a border for better visibility
-      boxShadow="3px 3px 10px rgba(232, 241, 248, 0.5)" // Optional: Add a shadow for better visibility
+      overflowY="auto"
+      border={"3px solid rgb(28, 99, 222,0.5)"}
+      boxShadow="3px 3px 10px rgba(232, 241, 248, 0.5)"
     >
       {chats.length > 0 ? (
         chats.map((chat) => (
@@ -134,12 +134,16 @@ useEffect(() => {
           >
             <Text fontWeight="bold">{chat.chat_name}</Text>
             <Text fontSize="sm">
-              <b>{chat.latestMessage?.message_sender?.username}:</b>{" "}
-              {chat.latestMessage?.message_content}
+              {chat.latestMessage ? (
+                <>
+                  <b>{chat.latestMessage.message_sender?.username}:</b>{" "}
+                  {chat.latestMessage.message_content}
+                </>
+              ) : (
+                <span>No message content</span>
+              )}
             </Text>
-         
           </Box>
-          
         ))
       ) : (
         <Text>No chats found.</Text>

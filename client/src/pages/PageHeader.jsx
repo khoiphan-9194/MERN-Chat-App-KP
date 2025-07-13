@@ -11,7 +11,7 @@ import {
 import UserList from "./UserList";
 import auth from "../utils/auth";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
-import AvatarDropDownMenu from "../components/AvatarDropDownMenu";
+import AvatarDropDownMenu from "../UI/AvatarDropDownMenu";
 import { Link } from "react-router-dom";
 import DateTime from "../components/Date";
 
@@ -118,7 +118,7 @@ function PageHeader() {
               color="blackAlpha.900"
               fontFamily="'Caveat', cursive"
             >
-              TALK-ATIVE
+             Beetalk
             </Text>
           </Link>
 
@@ -126,6 +126,7 @@ function PageHeader() {
             username={auth.getProfile().data.username}
             profile_picture={authUserInfo.user?.profile_picture}
             logout={handleLogout}
+            userId={auth.getProfile().data._id}
           />
         </Stack>
       </Box>
