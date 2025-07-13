@@ -71,6 +71,8 @@ function MyChat({ userId, setCurrentChat }) {
     };
   }, [chats, selectedChatIds, refetch]);
 
+  
+
   useEffect(() => {
     const handleNewChatRoom = (chatData) => {
       // we check as long as user sent a message to the chat room, we will refetch the chats
