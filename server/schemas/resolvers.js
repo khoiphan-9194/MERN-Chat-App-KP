@@ -1,9 +1,8 @@
+const { User, Chat, Message } = require("../models");
+const { updateMany } = require("../models/User");
+const auth = require("../utils/auth");
 
-
-const {User, Chat, Message} = require('../models');
-const auth = require('../utils/auth');
-
-const { signToken, AuthenticationError } = require('../utils/auth');
+const { signToken, AuthenticationError } = require("../utils/auth");
 
 const resolvers = {
   Query: {
@@ -42,7 +41,18 @@ const resolvers = {
       if (!context.user) {
         throw new AuthenticationError("You need to be logged in to view chats");
       }
-      return Chat.find({ users: context.user._id })
+        // we will return all chats that the user is part of
+        // and that the user can see (userVisibility is true)
+        // this will ensure that the user can only see chats that they are part of and that
+        // they have visibility to, preventing them from seeing chats they are not part of
+        // and that they have visibility to
+        // this is important because we want to ensure that the user can only see chats that they
+        // are part of and that they have visibility to, preventing them from seeing chats they are not part of
+        // and that they have visibility to
+      return Chat.find({
+        users: context.user._id,
+        [`userVisibility.${context.user._id}`]: true,
+      }) // Only show chat if it's visible to the user
         .populate("users", "-__v -password")
         .populate({
           path: "latestMessage",
@@ -208,12 +218,22 @@ const resolvers = {
         return existingChat;
       }
 
-      // Create a new chat
+      // Initialize userVisibility map: creator sees it, others do not
+      // because we want to ensure that the creator of the chat can see the chat, not the other users
+      // and the other users will not see the chat until a message is sent
+      const userVisibility = new Map(); // will create an empty map
+      userVisibility.set(context.user._id.toString(), true); //set the creator's visibility to true, that means the creator can see the chat
+      for (const userId of users) {
+        // the rest of the users will not see the chat until it is true ( message is sent)
+        userVisibility.set(userId.toString(), false);
+      }
+
       const chat = await Chat.create({
         chat_name,
         isGroupChat: false,
         users: [context.user._id, ...users],
         groupAdmin: context.user._id,
+        userVisibility,
       });
 
       // ✅ Emit to the users involved in the chat
@@ -262,69 +282,143 @@ const resolvers = {
       }
     },
 
-    addMessage: async (parent, { chatId, message_content }, context) => {
-      const { user, io } = context;
-
-      if (!user) {
+    updateChat: async (parent, { chatId, chat_name, users }, context) => {
+      if (!context.user) {
         throw new AuthenticationError(
-          "You need to be logged in to send a message"
+          "You need to be logged in to update a chat"
         );
       }
-
-      if (!chatId || !message_content) {
-        throw new Error(
-          "Chat ID and message_content are required to send a message"
-        );
-      }
-
-      if (!chatId.match(/^[0-9a-fA-F]{24}$/)) {
+      if (!chatId?.match(/^[0-9a-fA-F]{24}$/)) {
         throw new Error("Invalid chat ID format");
       }
+      if (!chat_name && (!users || users.length === 0)) {
+        throw new Error(
+          "At least one field (chat_name or users) is required to update a chat"
+        );
+      }
 
-      const chat = await Chat.findById(chatId);
-      if (!chat) {
+      // Find the chat to update
+      const Update_chat = await Chat.findById(chatId);
+      if (!Update_chat) {
         throw new Error("Chat not found");
       }
 
-      const isFirstMessage = !chat.latestMessage; // when creating a new chat, latestMessage will be null
-      // what isFirstMessage does is that it will check if the chat has a latest message or not,
-      // if it does, it means that the chat already exists and we are adding a new message to it,
-      // if it doesn't, it means that we are creating a new chat and
-      // we need to emit the new chat room to all users in the chat room
-      // so that they can receive the new chat room in real-time without having to refresh the page
-      // !chat.latestMessage same as chat.latestMessage === null  
-
-
-      if (!chat.users.includes(user._id)) {
-        throw new Error("You are not a member of this chat");
+      // Check if the user is the group admin
+      if (Update_chat.groupAdmin.toString() !== context.user._id.toString()) {
+        throw new AuthenticationError(
+          "You are not authorized to update this chat"
+        );
       }
 
-      // ✅ Save the new message
+      // Update the chat
+      Update_chat.chat_name = chat_name || Update_chat.chat_name;
+      Update_chat.users = users || Update_chat.users;
+
+      await Update_chat.save();
+
+      return Update_chat;
+    },
+
+    addMessage: async (parent, { chatId, message_content }, context) => {
+      const { user, io } = context;
+
+      // 1. Authentication check
+      if (!user) {
+        throw new AuthenticationError(
+          "You need to be logged in to send a message."
+        );
+      }
+
+      // 2. Input validation
+      if (!chatId?.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new Error("Invalid chat ID format.");
+      }
+      if (!message_content || message_content.trim() === "") {
+        throw new Error("Message content cannot be empty.");
+      }
+
+      // Optional: Limit message length
+      if (message_content.length > 1000) {
+        throw new Error(
+          "Message is too long. Maximum 1000 characters allowed."
+        );
+      }
+
+      // 3. Chat existence and permission check
+      const chat = await Chat.findById(chatId);
+      if (!chat) {
+        throw new Error("Chat not found.");
+      }
+      if (!chat.users.includes(user._id)) {
+        throw new Error("You are not a member of this chat.");
+      }
+
+      // 4. Check if it's the first message in the chat
+      /*
+      const isFirstMessage = !chat.latestMessage;
+      will set isFirstMessage to:
+      true → if there are no messages yet in the chat.
+      false → if there's already a previous message.
+
+      !chat.latestMessage:
+      chat.latestMessage	      !chat.latestMessage	                     What it means
+      null or undefined	              true	                  No messages yet – this is the first message
+      message ID (truthy)	            false	                  There is already at least one message
+       */
+      const isFirstMessage = !chat.latestMessage;
+
+      // 5. Save the new message
       const message = await Message.create({
         message_sender: user._id,
-        message_content,
+        message_content: message_content.trim(),
         chatRoom: chatId,
       });
 
-      // ✅ Update latest message in chat
+      // 6. Update the chat's latest message
       chat.latestMessage = message._id;
+
+      /*
+      ✅ if (isFirstMessage)
+      This code only runs if it's the first message ever sent in the chat.
+
+      🔁 for (const userId of chat.users)
+      Iterates over all users in the chat, including the sender and the receiver(s).
+
+      🚫 if (userId.toString() !== user._id.toString())
+      Skips the current sender (the one sending the first message), because they already have visibility.
+
+      ✅ chat.userVisibility.set(userId.toString(), true);
+      Updates the userVisibility map to make the chat visible to the other user(s) in the chat (e.g., user B).
+      So now user B will see the chat in their chat list.
+      
+      📦 Final Result:
+      If user A starts a chat with user B, initially only user A sees it. 
+      But after the first message is sent, this code sets:
+
+      chat.userVisibility = {
+              "userA": true,
+              "userB": true,
+                };
+    Now both A and B see the chat.
+      */
+
+      if (isFirstMessage) {
+        for (const userId of chat.users) {
+          if (userId.toString() !== user._id.toString()) {
+            chat.userVisibility.set(userId.toString(), true);
+          }
+        }
+      }
+
       await chat.save();
 
-      // ✅ Populate message_sender info for real-time clients
+      // 7. Populate message sender info
       const populatedMessage = await message.populate(
         "message_sender",
         "username"
       );
 
-      // ✅ Emit newMessage to this chat room
-
-      // why do we need to use io here?
-      // Because we need to send the new message to all clients in the chat room
-      // for example, if a user sends a new message from a chat room,
-      // resolvers will handle the logic to save the message to the database,
-      // and then emit the newMessage event to all clients in the chat room
-      // so that they can receive the new message in real-time without having to refresh the page
-      // do we have to use io.to(chatId).emit("newMessage", ...) in frontend?
+      // 8. Emit the new message to the chat room
       io.to(chatId).emit("newMessage", {
         _id: populatedMessage._id,
         chatId,
@@ -335,12 +429,14 @@ const resolvers = {
         },
         createdAt: populatedMessage.createdAt,
       });
-      console.log(
-        `✅ Resolver New message sent to chat ${chatId}:`,
-        populatedMessage
-      );
-      // Emit to all users in the chat room
-      // This is to notify all users in the chat room that a new message has been sent
+
+      console.log(`✅ New message sent to chat ${chatId}:`, populatedMessage);
+
+      // 9. If first message, notify other users of new chat room
+      // ✅ Emit to the users involved in the chat
+      // what it does is that it will emit the new chat to all users in the chat room,
+      // so that they can receive the new chat in real-time without having to refresh the page
+
       if (isFirstMessage) {
         for (const userId of chat.users) {
           if (userId.toString() !== user._id.toString()) {
@@ -350,92 +446,67 @@ const resolvers = {
         }
       }
 
-
       return populatedMessage;
     },
   },
 };
 
-
-
- 
-
-
-
-
 module.exports = resolvers;
- 
+
 /*
-addMessage: async (parent, { chatId, message_content }, context) => {
-  const { user, io } = context;
-
-  // 1. Authentication check
-  if (!user) {
-    throw new AuthenticationError("You need to be logged in to send a message.");
-  }
-
-  // 2. Input validation
-  if (!chatId?.match(/^[0-9a-fA-F]{24}$/)) {
-    throw new Error("Invalid chat ID format.");
-  }
-  if (!message_content || message_content.trim() === "") {
-    throw new Error("Message content cannot be empty.");
-  }
-
-  // Optional: Limit message length
-  if (message_content.length > 1000) {
-    throw new Error("Message is too long. Maximum 1000 characters allowed.");
-  }
-
-  // 3. Chat existence and permission check
-  const chat = await Chat.findById(chatId);
-  if (!chat) {
-    throw new Error("Chat not found.");
-  }
-  if (!chat.users.includes(user._id)) {
-    throw new Error("You are not a member of this chat.");
-  }
-
-  // 4. Check if it's the first message in the chat
-  const isFirstMessage = !chat.latestMessage;
-
-  // 5. Save the new message
-  const message = await Message.create({
-    message_sender: user._id,
-    message_content: message_content.trim(),
-    chatRoom: chatId,
-  });
-
-  // 6. Update the chat's latest message
-  chat.latestMessage = message._id;
-  await chat.save();
-
-  // 7. Populate message sender info
-  const populatedMessage = await message.populate("message_sender", "username");
-
-  // 8. Emit the new message to the chat room
-  io.to(chatId).emit("newMessage", {
-    _id: populatedMessage._id,
-    chatId,
-    message_content: populatedMessage.message_content,
-    message_sender: {
-      _id: populatedMessage.message_sender._id,
-      username: populatedMessage.message_sender.username,
-    },
-    createdAt: populatedMessage.createdAt,
-  });
-
-  console.log(`✅ New message sent to chat ${chatId}:`, populatedMessage);
-
-  // 9. If first message, notify other users of new chat room
-  if (isFirstMessage) {
-    for (const userId of chat.users) {
-      if (userId.toString() !== user._id.toString()) {
-        io.to(userId.toString()).emit("newChatRoom", chat);
-        console.log(`✅ Notified User ${userId} of new chat room.`);
-      }
-    }
-  }
-
-  return populatedMessage;
+const userVisibility = new Map(); // will create an empty map
+userVisibility.set(context.user._id.toString(), true);
+for (const userId of users) {
+  userVisibility.set(userId.toString(), false);
 }
+
+🔍 Explanation:
+✅ const userVisibility = new Map();
+
+    This creates an empty Map object.
+
+    You’ll use this to store visibility status for each user in the chat.
+
+✅ userVisibility.set(context.user._id.toString(), true);
+
+    Sets visibility to true for the chat creator (the logged-in user).
+
+    Why? Because the creator should always be able to see the chat right away.
+
+✅ for (const userId of users) { ... }
+
+    This loop goes through all the other users you're adding to the chat (usually just 1 other user for one-on-one chats).
+
+Inside the loop:
+
+userVisibility.set(userId.toString(), false);
+
+    It sets visibility to false for each of the other users in the chat.
+
+    Why? So that the chat doesn't show up in their chat list yet — until a message is sent.
+
+💡 Example:
+
+Suppose:
+
+    context.user._id = "123" (this is you)
+
+    users = ["456", "789"] (you’re creating a group chat with two other users)
+
+After running the code:
+
+userVisibility = {
+  "123": true,   // You can see the chat
+  "456": false,  // These users can't yet
+  "789": false
+}
+
+🔚 Why it's useful:
+
+    Ensures a private chat isn’t visible to others until interaction happens.
+
+    Prevents confusion for users receiving random empty chats.
+
+    Keeps your UI clean and intentional — no chat appears unless there's context (like a message).
+
+*/

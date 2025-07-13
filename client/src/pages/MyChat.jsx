@@ -7,10 +7,6 @@ import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 import socket from "../utils/socket-client"; // Import the Socket.IO client instance
 import { displayTime } from "../utils/helpers";
 
-
-
-
-
 function MyChat({ userId, setCurrentChat }) {
   const { updateSelectedChat, authUserInfo } = useAuthUserInfo();
   const { loading, error, data, refetch } = useQuery(GET_CHATS_BY_USER, {
@@ -29,7 +25,6 @@ function MyChat({ userId, setCurrentChat }) {
     }
   }, [chats, updateSelectedChat]);
 
-
   const joinedChatIds = useRef(new Set()); // To track joined chat IDs
   useEffect(() => {
     if (!chats || chats.length === 0) return;
@@ -39,7 +34,7 @@ function MyChat({ userId, setCurrentChat }) {
     // since a user can be part of multiple chats,
     // we loop through each chat and check if the chat ID is already in the joinedChatIds set.
     // If not, we join the chat room and add the chat ID to the set.
-    //joinedChatIds.current.has is used to check if the chat ID is already in the set.
+    // joinedChatIds.current.has is used to check if the chat ID is already in the set.
     //.current is a property of the useRef hook that holds the mutable object.
     // what .current does in general is that it allows you to access the current value of the ref object.
     // useRef is a hook that allows you to create a mutable object which holds a `.current` property.
@@ -67,7 +62,6 @@ function MyChat({ userId, setCurrentChat }) {
 
     // after joining the chat rooms, we listen for new messages
     // and if the new message is from the selected chat room, we refetch the chats
-
     socket.on("newMessage", handleNewMessage);
 
     return () => {
@@ -77,25 +71,22 @@ function MyChat({ userId, setCurrentChat }) {
     };
   }, [chats, selectedChatIds, refetch]);
 
+  useEffect(() => {
+    const handleNewChatRoom = (chatData) => {
+      // we check as long as user sent a message to the chat room, we will refetch the chats
+      if (!chatData || !chatData._id) return;
+      console.log("New chat room created:", chatData);
+      refetch();
+    };
 
+    // every time this component will always listen for new chat rooms
+    // and if a new chat room is created, we will refetch the chats
+    socket.on("newChatRoom", handleNewChatRoom);
 
-useEffect(() => {
-  const handleNewChatRoom = (chatData) => {
- // we check as long as user sent a message to the chat room, we will refetch the chats
-    if (!chatData || !chatData._id) return;
-    console.log("New chat room created:", chatData);
-    refetch();
-  };
-
-  // every time this component will always listen for new chat rooms
-  // and if a new chat room is created, we will refetch the chats
-  socket.on("newChatRoom", handleNewChatRoom);
-
-  return () => {
-    socket.off("newChatRoom", handleNewChatRoom);
-  };
-}, [refetch]);
-
+    return () => {
+      socket.off("newChatRoom", handleNewChatRoom);
+    };
+  }, [refetch]);
 
   const handleViewChat = (chat) => {
     setCurrentChat(chat); // Only updates the currently *viewed* chat
@@ -155,28 +146,26 @@ useEffect(() => {
 export default MyChat;
 
 //This prevents joining the same chat room multiple times.
-    // since a user can be part of multiple chats, 
-    // we loop through each chat and check if the chat ID is already in the joinedChatIds set.
-    // If not, we join the chat room and add the chat ID to the set.
-    //joinedChatIds.current.has is used to check if the chat ID is already in the set.
-    //.current is a property of the useRef hook that holds the mutable object.
-    // what .current does in general is that it allows you to access the current value of the ref object.
-    // useRef is a hook that allows you to create a mutable object which holds a `.current` property.
-    // without rendering the component again.
-    // note that we would have to include socket.emit("joinChat", chat._id) in the useEffect hook
-    // so that it will join the chat room when the component mounts or when the chats change
-    // without socket.emit("joinChat", chat._id), the user will not be able to receive messages from server
-    
-    // chats.forEach((chat) => {
-    //   if (!joinedChatIds.current.has(chat._id)) {
-    //     socket.emit("joinChat", chat._id);
-    //     joinedChatIds.current.add(chat._id);
-    //   }
-    // });
-    
-    
-    
-    /*
+// since a user can be part of multiple chats,
+// we loop through each chat and check if the chat ID is already in the joinedChatIds set.
+// If not, we join the chat room and add the chat ID to the set.
+//joinedChatIds.current.has is used to check if the chat ID is already in the set.
+//.current is a property of the useRef hook that holds the mutable object.
+// what .current does in general is that it allows you to access the current value of the ref object.
+// useRef is a hook that allows you to create a mutable object which holds a `.current` property.
+// without rendering the component again.
+// note that we would have to include socket.emit("joinChat", chat._id) in the useEffect hook
+// so that it will join the chat room when the component mounts or when the chats change
+// without socket.emit("joinChat", chat._id), the user will not be able to receive messages from server
+
+// chats.forEach((chat) => {
+//   if (!joinedChatIds.current.has(chat._id)) {
+//     socket.emit("joinChat", chat._id);
+//     joinedChatIds.current.add(chat._id);
+//   }
+// });
+
+/*
     
        <Text
               fontSize="2xs"
