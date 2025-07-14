@@ -35,10 +35,7 @@ const chatSchema = new Schema(
         of: Boolean,
         default: {},
       },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
+
     wasSeen: {
       type: Boolean,
       default: false, // default to false, chat is not seen

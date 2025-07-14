@@ -1,4 +1,8 @@
 import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
+
 
 
 
@@ -16,13 +20,9 @@ export function removeHyphensAndCapitalize(string) {
 
 }
 
-export function displayTime()
-{
-var rightNow = dayjs().format('MMM DD, YYYY [at] hh:mm a');
-
-setInterval(displayTime, 1000);
-return rightNow;
-
+export function displayTime(timestamp) {
+  if (!timestamp) return "No date provided";
+  return dayjs(Number(timestamp)).format("MMM DD, YYYY [at] hh:mm a");
 }
 
 export function displayTimeDashBoard() {

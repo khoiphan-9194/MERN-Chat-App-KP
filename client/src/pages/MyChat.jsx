@@ -1,11 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef ,useMemo } from "react";
 import { useQuery } from "@apollo/client";
 import { GET_CHATS_BY_USER } from "../utils/queries";
-import auth from "../utils/auth";
 import { Box, Text } from "@chakra-ui/react";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
-import socket from "../utils/socket-client"; // Import the Socket.IO client instance
-import { displayTime } from "../utils/helpers";
+import socket from "../utils/socket-client"; // Import the Socket.IO client instance+
+import { displayTime } from "../utils/helpers"; // Import the displayTime function
+
 
 function MyChat({ userId, setCurrentChat }) {
   const { updateSelectedChat, authUserInfo } = useAuthUserInfo();
@@ -25,12 +25,19 @@ function MyChat({ userId, setCurrentChat }) {
     }
   }, [chats, updateSelectedChat]);
 
+  // NOTE #2
   const joinedChatIds = useRef(new Set()); // To track joined chat IDs
+
+  // NOTE #3
   useEffect(() => {
+    /*
+    This prevents the effect from running if:
+    chats is undefined or null OR There are no chats to join.
+    */
     if (!chats || chats.length === 0) return;
     // Join each chat room via Socket.IO
 
-    //This prevents joining the same chat room multiple times.
+    // This prevents joining the same chat room multiple times.
     // since a user can be part of multiple chats,
     // we loop through each chat and check if the chat ID is already in the joinedChatIds set.
     // If not, we join the chat room and add the chat ID to the set.
@@ -71,8 +78,7 @@ function MyChat({ userId, setCurrentChat }) {
     };
   }, [chats, selectedChatIds, refetch]);
 
-  
-
+  // Note #4
   useEffect(() => {
     const handleNewChatRoom = (chatData) => {
       // we check as long as user sent a message to the chat room, we will refetch the chats
@@ -95,6 +101,8 @@ function MyChat({ userId, setCurrentChat }) {
 
     refetch(); // Refetch to ensure latest messages are loaded
   };
+  
+
 
   if (loading) return <Text>Loading chats...</Text>;
   if (error) return <Text color="red.500">Error: {error.message}</Text>;
@@ -111,7 +119,7 @@ function MyChat({ userId, setCurrentChat }) {
       height="450px"
       overflowY="auto"
       border={"3px solid rgb(28, 99, 222,0.5)"}
-      boxShadow="3px 3px 10px rgba(232, 241, 248, 0.5)"
+      boxShadow="3px 3px 10px rgba(232, 241, 248, 0.5)" 
     >
       {chats.length > 0 ? (
         chats.map((chat) => (
@@ -131,6 +139,21 @@ function MyChat({ userId, setCurrentChat }) {
                 <>
                   <b>{chat.latestMessage.message_sender?.username}:</b>{" "}
                   {chat.latestMessage.message_content}
+                  <Text
+                    fontSize="2xs"
+                    color="gray.400"
+                    fontFamily="sans-serif"
+                    letterSpacing="wider"
+                    fontStyle="normal"
+                    lineHeight="shorter"
+                  >
+                    {chat.latestMessage?.createdAt && (
+                      <>
+                        <span>{displayTime(chat.latestMessage.createdAt)}</span>
+                     
+                      </>
+                    )}
+                  </Text>
                 </>
               ) : (
                 <span>No message content</span>
@@ -147,26 +170,6 @@ function MyChat({ userId, setCurrentChat }) {
 
 export default MyChat;
 
-//This prevents joining the same chat room multiple times.
-// since a user can be part of multiple chats,
-// we loop through each chat and check if the chat ID is already in the joinedChatIds set.
-// If not, we join the chat room and add the chat ID to the set.
-//joinedChatIds.current.has is used to check if the chat ID is already in the set.
-//.current is a property of the useRef hook that holds the mutable object.
-// what .current does in general is that it allows you to access the current value of the ref object.
-// useRef is a hook that allows you to create a mutable object which holds a `.current` property.
-// without rendering the component again.
-// note that we would have to include socket.emit("joinChat", chat._id) in the useEffect hook
-// so that it will join the chat room when the component mounts or when the chats change
-// without socket.emit("joinChat", chat._id), the user will not be able to receive messages from server
-
-// chats.forEach((chat) => {
-//   if (!joinedChatIds.current.has(chat._id)) {
-//     socket.emit("joinChat", chat._id);
-//     joinedChatIds.current.add(chat._id);
-//   }
-// });
-
 /*
     
        <Text
@@ -182,3 +185,197 @@ export default MyChat;
               )}
             </Text>
     */
+
+/*
+Note #2
+
+✅ Purpose of joinedChatIds
+
+This line creates a persistent Set that stores which chat rooms the user has already joined via Socket.IO — and it does so without triggering re-renders.
+🔍 Why use useRef?
+
+    useRef() returns a mutable object with a .current property.
+
+    Unlike state (useState), changing .current does NOT cause re-renders.
+
+    Perfect for tracking things over time that don’t need to appear in the UI.
+
+🧠 Why use Set?
+
+    A Set ensures that each chat ID is unique — no duplicates.
+
+    So if your useEffect runs multiple times (e.g., when chats updates), the same chat won’t be joined multiple times.
+
+🗂️ Example Usage in Your Effect
+
+if (!joinedChatIds.current.has(chat._id)) {
+  socket.emit("joinChat", chat._id);
+  joinedChatIds.current.add(chat._id);
+}
+
+    Before joining a chat room, you check if it’s already joined.
+
+    If not, you emit joinChat and add it to the Set.
+
+    This prevents repeated joinChat calls to the same room.
+
+✅ Summary
+Concept	Value
+useRef(new Set())	Creates a live object that holds chat IDs across renders.
+.current	Access the actual Set that stores IDs.
+Why Set?	Avoid duplicates automatically.
+Why useRef?	No re-render when it updates — fast and efficient.
+Let me know if you want to reset joinedChatIds when a user logs out or changes accounts — that's a common enhancement.
+*/
+
+/*
+  NOTE #3
+  ✅ Full Explanation of Your useEffect
+
+useEffect(() => {
+
+This hook runs:
+
+    When chats, selectedChatIds, or refetch changes.
+
+    It manages joining chat rooms via Socket.IO and listening for new messages.
+
+✅ Guard Clause: Skip if no chats
+
+if (!chats || chats.length === 0) return;
+
+This prevents the effect from running if:
+
+    chats is undefined or null.
+
+    There are no chats to join.
+
+✅ Why join chat rooms?
+
+chats.forEach((chat) => {
+  if (!joinedChatIds.current.has(chat._id)) {
+    socket.emit("joinChat", chat._id);
+    joinedChatIds.current.add(chat._id);
+  }
+});
+
+This does room-based real-time communication via Socket.IO:
+
+    socket.emit("joinChat", chat._id) tells the server:
+
+        "I want to join the room with this chat ID."
+
+    This lets the server know which rooms this socket should listen to.
+
+    joinedChatIds is a useRef(new Set()) that tracks which rooms we’ve already joined.
+
+        useRef is used so this tracking doesn't trigger re-renders.
+
+        .current gives access to the mutable Set that lives outside the render cycle.
+
+✅ Listen for real-time updates
+
+const handleNewMessage = (messageData) => {
+  console.log("New message received:", messageData);
+
+  if (selectedChatIds.includes(messageData.chatId)) {
+    refetch();
+  }
+};
+
+    When a new message is received via Socket.IO ("newMessage" event), this callback runs.
+
+    If the message is for a currently selected chat, it triggers a refetch (e.g., GraphQL query or any other state update).
+
+    This keeps the UI fresh and up-to-date without refreshing.
+
+✅ Add the listener
+
+socket.on("newMessage", handleNewMessage);
+
+This subscribes the socket to listen for "newMessage" events from the server.
+✅ Cleanup function
+
+return () => {
+  socket.off("newMessage", handleNewMessage);
+};
+
+This ensures:
+
+    The event listener is removed when the component unmounts or before re-running the effect.
+
+    Prevents memory leaks and duplicate listeners (which would result in multiple console logs and repeated actions).
+
+🧠 Summary: What This Does
+Part	Purpose
+if (!chats)	Avoids unnecessary runs if there are no chats.
+socket.emit("joinChat", ...)	Tells the server to join that chat room for real-time messaging.
+joinedChatIds + useRef	Tracks rooms joined already, avoids duplicate emits.
+socket.on("newMessage")	Listens for new messages sent by others.
+refetch()	Keeps the selected chat up-to-date with new messages.
+socket.off	Cleans up listeners to prevent bugs and leaks.
+  */
+
+
+
+/*
+Note #4
+
+✅ What is this code doing?
+
+This useEffect sets up a real-time listener for a "newChatRoom" event using Socket.IO, and refetches the user's chat list whenever a new chat room is created (such as when someone sends you a message for the first time).
+🧠 Detailed Explanation
+
+useEffect(() => {
+
+    This useEffect runs once when the component mounts, or anytime refetch changes (which is likely stable and only changes if the query hook is re-created).
+
+  const handleNewChatRoom = (chatData) => {
+    // we check as long as user sent a message to the chat room, we will refetch the chats
+    if (!chatData || !chatData._id) return;
+    console.log("New chat room created:", chatData);
+    refetch();
+  };
+
+    handleNewChatRoom is the function that will run when the socket receives a "newChatRoom" event.
+
+    It first checks if chatData is valid (has an _id).
+
+    If so, it logs the new chat room and then calls refetch() to reload the current user's list of chats.
+
+    This is important because the chat list won’t update unless we explicitly fetch again.
+
+  socket.on("newChatRoom", handleNewChatRoom);
+
+    This tells Socket.IO to listen for the "newChatRoom" event from the server and trigger handleNewChatRoom when it happens.
+
+  return () => {
+    socket.off("newChatRoom", handleNewChatRoom);
+  };
+
+    This is the cleanup function that runs when the component unmounts or refetch changes.
+
+    It removes the event listener to prevent memory leaks or duplicate event handling.
+
+    Without this, if the component remounts multiple times, you might have multiple listeners responding to the same event.
+
+🧩 Example Use Case
+
+Let’s say:
+
+    You created a one-on-one chat with User B.
+
+    But User B doesn't see the chat room yet (by design).
+
+    When you send the first message, the server emits newChatRoom to User B.
+
+    This code listens for that and refetches User B’s chat list, making the new chat appear in real-time.
+
+📌 Summary
+Part	Purpose
+socket.on("newChatRoom", ...)	Listen for server-side creation of a new chat.
+refetch()	Refresh the chat list so the UI updates.
+socket.off(...)	Clean up the listener when the component is removed.
+
+
+*/

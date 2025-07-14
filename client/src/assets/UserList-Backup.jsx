@@ -12,7 +12,7 @@ function UserList() {
   const [filterValue, setFilterValue] = useState("");
     const [debouncedFilter, setDebouncedFilter] = useState("");
   const { authUserInfo, updateSelectedChat } = useAuthUserInfo();
- 
+  const [userSearch, setUserSearch] = useState("");
 
   // ✅ Debounce: wait 300ms after user stops typing
   /*
@@ -77,23 +77,20 @@ If the input is empty, we don't show any users:
 : [];
 
   */
+const filteredUsers =
+  debouncedFilter.trim() !== ""
+    ? data?.users?.filter(
+        (user) =>
+          user?.username &&
+          user.username.toLowerCase().includes(debouncedFilter.toLowerCase())
+      ) || []
+    : [];
+
+  console.log("Filtered Users:", filteredUsers);
   
-  // Use useMemo to optimize performance by memoizing the filtered users
-  // This reduces the number of re-renders and API calls, improving performance.
-  // what useMemo does is it returns a memoized value, which means it will only recompute the filtered users when debouncedFilter or data changes.
-  // For example, if the user types "a", then "b", then "c " quickly, the filteredUsers will only be recomputed once after 300 milliseconds after the user stops typing.
-  // This prevents unnecessary re-renders and API calls, improving performance.
-  // this is a performance optimization technique that helps to avoid unnecessary computations and re-renders in React components.
-  // it makes the app render faster and more efficiently by only recalculating the filtered users when necessary.
-  const filteredUsers = useMemo(() => {
-    return debouncedFilter.trim() !== ""
-      ? data?.users?.filter(
-          (user) =>
-            user?.username &&
-            user.username.toLowerCase().includes(debouncedFilter.toLowerCase())
-        ) || []
-      : [];
-  }, [debouncedFilter, data]);
+
+
+
 
 
 

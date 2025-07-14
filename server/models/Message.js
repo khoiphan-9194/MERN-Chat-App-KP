@@ -19,13 +19,10 @@ const messageSchema = new Schema(
       ref: "Chat",
       required: true,
     },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
+
   },
   {
-    timestamps: true,
+    timestamps: true, // automatically adds createdAt and updatedAt fields
   }
 );
 // This will allow us to use virtuals in the message model

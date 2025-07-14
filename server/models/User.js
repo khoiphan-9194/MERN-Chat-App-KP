@@ -23,7 +23,7 @@ const userSchema = new Schema(
 
     profile_picture: {
       type: String,
-      default: "/assets/default-avatar.jpg", // path to the default profile picture
+      default: "/userAvatar/default-avatar.jpg", // path to default avatar
       // default profile picture if none is provided
     },
     isOnline: {
