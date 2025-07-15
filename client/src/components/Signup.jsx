@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Form, Button, Alert, Modal } from 'react-bootstrap';
-import { useMutation } from '@apollo/client';
-import { USER_SIGNUP } from '../utils/mutations';
-import Auth from '../utils/auth';
-import axios from "axios";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Form, Button, Alert, Modal } from "react-bootstrap";
+import { useMutation } from "@apollo/client";
+import { USER_SIGNUP } from "../utils/mutations";
+import Auth from "../utils/auth";
+import { uploadAvatar } from "../utils/API";
 
 const Signup = () => {
   // set initial form state
@@ -12,9 +12,9 @@ const Signup = () => {
     username: "",
     user_email: "",
     password: "",
-    profile_picture: ""
+    profile_picture: "",
   });
-  const [signedUpusername, setSignedUpusername] = useState('');
+  const [signedUpusername, setSignedUpusername] = useState("");
   // set state for form validation
   const [validated] = useState(false);
   // set state for alert
@@ -28,9 +28,7 @@ const Signup = () => {
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setUserFormData({ ...userFormData, [name]: value });
-  }
-
-
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -49,17 +47,8 @@ const Signup = () => {
     const formData = new FormData();
     formData.append("file", newPostImage);
     console.log(formData);
-    axios
-      .post(`http://localhost:3001/upload/single`, formData)
-
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    await uploadAvatar(formData);
   };
-
 
   const handleFormSubmit = async (event) => {
     event.preventDefault();
@@ -68,7 +57,6 @@ const Signup = () => {
     try {
       await uploadImage(event);
 
-  
       const { data } = await addUser({
         variables: {
           username: userFormData.username,
@@ -83,31 +71,25 @@ const Signup = () => {
       console.log(data);
 
       if (!data) {
-        throw new Error('something went wrong!');
+        throw new Error("something went wrong!");
       }
 
       const { token, user } = data.addUser;
-      
+
       console.log(user);
-      console.log(token)
-    
+      console.log(token);
+
       Auth.login(token);
-    
-   
-      
-
-
-    }
-    catch (err) {
+    } catch (err) {
       console.error(err);
-      
+
       setShowAlert(true);
     }
     console.log(Auth.loggedIn());
     // clear form values
 
     setSignedUpusername(userFormData.username);
- 
+
     setUserFormData({
       username: "",
       user_email: "",
@@ -116,14 +98,8 @@ const Signup = () => {
     });
     setNewPostImage(null);
     setNewPostImageName("");
-
-
-
   };
 
-
-  
-  
   return (
     <main className="flex-row justify-center mb-4">
       <div className="col-12 col-lg-12">
@@ -196,7 +172,9 @@ const Signup = () => {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label htmlFor="profile_picture">Profile Picture</Form.Label>
+                  <Form.Label htmlFor="profile_picture">
+                    Profile Picture
+                  </Form.Label>
                   <Form.Control
                     type="file"
                     accept="image/*"
@@ -224,7 +202,9 @@ const Signup = () => {
                         src={URL.createObjectURL(newPostImage)}
                         alt={newPostImageName}
                       />
-                      <div style={{ color: "black", fontSize: "1.05rem" }}>{newPostImageName}</div>
+                      <div style={{ color: "black", fontSize: "1.05rem" }}>
+                        {newPostImageName}
+                      </div>
                     </div>
                   )}
                 </Form.Group>

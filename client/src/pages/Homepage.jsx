@@ -19,7 +19,7 @@ function Homepage() {
   
   return (
     <Box
-      minHeight="100vh"
+      minHeight="80vh"
       bgGradient="linear(to-r, #ffecd2, #fcb69f)"
       display="flex"
       alignItems="center"

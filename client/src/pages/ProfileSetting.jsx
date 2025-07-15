@@ -7,7 +7,8 @@ import { useMutation } from "@apollo/client";
 import { useState, useEffect } from "react";
 import Auth from "../utils/auth";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
-import axios from "axios";
+
+import {uploadAvatar} from "../utils/API"; // Import the uploadAvatar function
 
 const ProfileSetting = () => {
   const [isClicked, setIsClicked] = useState(false);
@@ -200,11 +201,10 @@ const ProfileSetting = () => {
     const formData = new FormData();
     formData.append("file", newPostImage);
     try {
-      const response = await axios.post(
-        `http://localhost:3001/upload/single`,
-        formData
-      );
-      console.log(response);
+      await uploadAvatar(formData); // Call the uploadAvatar function to upload the image
+      // Log the response or do something with it
+      console.log("Image uploaded successfully:", formData);
+ 
     } catch (err) {
       console.error("Error uploading image:", err);
     }

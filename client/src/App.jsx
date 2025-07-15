@@ -10,6 +10,7 @@ import { Outlet } from "react-router-dom";
 import PageHeader from "./pages/PageHeader";
 import CustomThemeProvider from "./utils/CustomThemeContext";
 import AuthenUserInfoProvider from "./utils/AuthUser_Info_Context";
+import Footer from "./components/Footer";
 
  
 const httpLink = createHttpLink({
@@ -41,6 +42,7 @@ function App() {
         <CustomThemeProvider>
          
           <Outlet />
+          <Footer />
 
 
         </CustomThemeProvider>
