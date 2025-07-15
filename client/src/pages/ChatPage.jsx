@@ -64,6 +64,7 @@ function ChatPage() {
                       }}>
                       {currentChat.chat_name}
                     </Text>
+                    
                     <ChatMessage chatId={currentChat._id} />
                   </>
                 ) : (

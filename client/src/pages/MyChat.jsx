@@ -14,7 +14,7 @@ function MyChat({ userId, setCurrentChat }) {
     skip: !userId,
   });
 
-  const chats = data?.chatsByUser || [];
+  const chats = useMemo(() => data?.chatsByUser || [], [data]);
   console.log("Fetched chats:", chats);
   const selectedChatIds = authUserInfo.selectedChats.map((chat) => chat._id);
 
@@ -116,7 +116,7 @@ function MyChat({ userId, setCurrentChat }) {
       w="100%"
       p="4"
       color="white"
-      height="450px"
+      height="500px"
       overflowY="auto"
       border={"3px solid rgb(28, 99, 222,0.5)"}
       boxShadow="3px 3px 10px rgba(232, 241, 248, 0.5)" 
