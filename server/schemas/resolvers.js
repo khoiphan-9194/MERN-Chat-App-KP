@@ -1,7 +1,4 @@
 const { User, Chat, Message } = require("../models");
-const { updateMany } = require("../models/User");
-const auth = require("../utils/auth");
-
 const { signToken, AuthenticationError } = require("../utils/auth");
 
 const resolvers = {

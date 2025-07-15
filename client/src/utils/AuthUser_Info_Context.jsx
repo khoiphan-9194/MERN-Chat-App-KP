@@ -3,18 +3,12 @@ import socket from "./socket-client";
 import auth from "./auth";
 import AuthPageComponent from "../UI/AuthPageComponent";
 
-
-
-
-
 // 1. Create Context
 export const AuthUser_Info_Context = createContext();
 
 // 2. Custom Hook for easy access
 export const useAuthUserInfo = () => useContext(AuthUser_Info_Context);
 // import io from "socket.io-client";
-
-
 
 // 3. Provider Component
 const AuthenUserInfoProvider = ({ children }) => {
@@ -43,8 +37,8 @@ const AuthenUserInfoProvider = ({ children }) => {
             userId: newUser.userId,
             username: newUser.username,
             user_email: newUser.user_email,
-            profile_picture: newUser.profile_picture || "/assets/default-avatar.jpg", // Default avatar if
-           
+            profile_picture:
+              newUser.profile_picture || "/assets/default-avatar.jpg", // Default avatar if not provided
           },
         };
       });
@@ -116,54 +110,50 @@ const AuthenUserInfoProvider = ({ children }) => {
     console.log("Socket connection status:", socket.connected);
   }, [authUserInfo.user]);
 
-
-
-  //  run this effect specifically when the token changes, 
+  //  run this effect specifically when the token changes,
   //  then you should extract the token to state or context and use it like this:
 
-const token = auth.getToken();
+  const token = auth.getToken();
 
-useEffect(() => {
-  if (!token) {
-    console.error("No token found");
-    return;
-  }
+  useEffect(() => {
+    if (!token) {
+      console.error("No token found");
+      return;
+    }
 
-  const profile = auth.getProfile();
-  if (profile?.data) {
-    const { _id: userId, username, user_email, profile_picture } = profile.data;
-    updateUserInfo({ userId, username, user_email, profile_picture });
-  }
-}, [token, updateUserInfo, authUserInfo]);
+    const profile = auth.getProfile();
+    if (profile?.data) {
+      const {
+        _id: userId,
+        username,
+        user_email,
+        profile_picture,
+      } = profile.data;
+      updateUserInfo({ userId, username, user_email, profile_picture });
+    }
+  }, [token, updateUserInfo, authUserInfo]);
 
-  
-  
-    return (
-      auth.loggedIn() ? (
-        <AuthUser_Info_Context.Provider
-          value={{
-            authUserInfo,
-            setAuthUserInfo,
-            updateUserInfo,
-            updateSelectedChat,
-            updateSelectedChats,
-            resetAuthUserInfo,
-            isLastestMessage,
-            setIsLastMessage,
-          }}
-        >
-          {children}
-        </AuthUser_Info_Context.Provider>
-      ) : (
-        <AuthPageComponent />
-      )
-    );
-  
- 
+  return auth.loggedIn() ? (
+    <AuthUser_Info_Context.Provider
+      value={{
+        authUserInfo,
+        setAuthUserInfo,
+        updateUserInfo,
+        updateSelectedChat,
+        updateSelectedChats,
+        resetAuthUserInfo,
+        isLastestMessage,
+        setIsLastMessage,
+      }}
+    >
+      {children}
+    </AuthUser_Info_Context.Provider>
+  ) : (
+    <AuthPageComponent />
+  );
 };
 
 export default AuthenUserInfoProvider;
-
 
 /*
   // ✅ Update selected chats (Add chat if not already selected)
@@ -185,4 +175,3 @@ export default AuthenUserInfoProvider;
     }
   };
 */
-
