@@ -272,11 +272,14 @@ const resolvers = {
           "You are not authorized to delete this chat"
         );
       }
-      // Delete the chat
+      // before deleting the chat, we need to delete all messages in the chat
+      await Message.deleteMany({ chatRoom: chatId }); // Delete all messages associated with the chat
+      // Now delete the chat itself
       const deletedChat = await Chat.findByIdAndDelete(chatId);
       if (!deletedChat) {
         throw new Error("Chat not found");
       }
+      // Emit to all users in the chat that the chat has been deleted
     },
 
     updateChat: async (parent, { chatId, chat_name, users }, context) => {

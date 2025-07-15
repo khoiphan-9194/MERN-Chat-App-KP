@@ -85,3 +85,16 @@ export const UPDATE_USER_PROFILE = gql`
     }
   }
 `;  
+
+export const DELETE_CHAT = gql`
+  mutation deleteChat($chatId: ID!) {
+    deleteChat(chatId: $chatId) {
+      _id
+      chat_name
+      users {
+        _id
+        username
+      }
+    }
+  }
+`;

@@ -5,7 +5,7 @@ import { Box, Text } from "@chakra-ui/react";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 import socket from "../utils/socket-client"; // Import the Socket.IO client instance+
 import { displayTime } from "../utils/helpers"; // Import the displayTime function
-
+import ChatDeletion from "../components/ChatDeletion"; // Import the ChatDeletion component
 
 function MyChat({ userId, setCurrentChat }) {
   const { updateSelectedChat, authUserInfo } = useAuthUserInfo();
@@ -14,6 +14,11 @@ function MyChat({ userId, setCurrentChat }) {
     skip: !userId,
   });
 
+  // chats = useMemo(() => data?.chatsByUser || [], [data])
+  // useMemo is used to memoize the chats array so that it does not get recalculated on every render
+  // means that the chats will only be fetched when the data changes
+  // and not on every render of the component
+  // it is used to optimize performance by preventing unnecessary re-renders
   const chats = useMemo(() => data?.chatsByUser || [], [data]);
   console.log("Fetched chats:", chats);
   const selectedChatIds = authUserInfo.selectedChats.map((chat) => chat._id);
@@ -101,8 +106,6 @@ function MyChat({ userId, setCurrentChat }) {
 
     refetch(); // Refetch to ensure latest messages are loaded
   };
-  
-
 
   if (loading) return <Text>Loading chats...</Text>;
   if (error) return <Text color="red.500">Error: {error.message}</Text>;
@@ -112,14 +115,14 @@ function MyChat({ userId, setCurrentChat }) {
       bg="gray.700"
       borderRadius="md"
       maxW="400px"
-      mx="auto"
+      mx={0}
       w="100%"
       p="4"
       color="white"
       height="500px"
       overflowY="auto"
       border={"3px solid rgb(28, 99, 222,0.5)"}
-      boxShadow="3px 3px 10px rgba(232, 241, 248, 0.5)" 
+      boxShadow="3px 3px 10px rgba(232, 241, 248, 0.5)"
     >
       {chats.length > 0 ? (
         chats.map((chat) => (
@@ -130,35 +133,50 @@ function MyChat({ userId, setCurrentChat }) {
             bg="gray.600"
             borderRadius="10px"
             cursor="pointer"
-            _hover={{ bg: "teal.500" }}
-            onClick={() => handleViewChat(chat)}
           >
-            <Text fontWeight="bold">{chat.chat_name}</Text>
-            <Text fontSize="sm">
-              {chat.latestMessage ? (
-                <>
-                  <b>{chat.latestMessage.message_sender?.username}:</b>{" "}
-                  {chat.latestMessage.message_content}
-                  <Text
-                    fontSize="2xs"
-                    color="gray.400"
-                    fontFamily="sans-serif"
-                    letterSpacing="wider"
-                    fontStyle="normal"
-                    lineHeight="shorter"
-                  >
-                    {chat.latestMessage?.createdAt && (
-                      <>
-                        <span>{displayTime(chat.latestMessage.createdAt)}</span>
-                     
-                      </>
-                    )}
-                  </Text>
-                </>
-              ) : (
-                <span>No message content</span>
-              )}
-            </Text>
+            <ChatDeletion chatId={chat._id} />{" "}
+            {/* Add ChatDeletion component */}
+
+            {/* 
+            Display chat name and latest message */}
+         
+            <Box
+              p="3"
+              mb="2"
+              bg="gray.600"
+              borderRadius="10px"
+              cursor="pointer"
+              _hover={{ bg: "teal.500" }}
+              onClick={() => handleViewChat(chat)}
+            >
+              <Text fontWeight="bold">{chat.chat_name}</Text>
+              <Text fontSize="sm">
+                {chat.latestMessage ? (
+                  <>
+                    <b>{chat.latestMessage.message_sender?.username}:</b>{" "}
+                    {chat.latestMessage.message_content}
+                    <Text
+                      fontSize="2xs"
+                      color="gray.400"
+                      fontFamily="sans-serif"
+                      letterSpacing="wider"
+                      fontStyle="normal"
+                      lineHeight="shorter"
+                    >
+                      {chat.latestMessage?.createdAt && (
+                        <>
+                          <span>
+                            {displayTime(chat.latestMessage.createdAt)}
+                          </span>
+                        </>
+                      )}
+                    </Text>
+                  </>
+                ) : (
+                  <span>No message content</span>
+                )}
+              </Text>
+            </Box>
           </Box>
         ))
       ) : (

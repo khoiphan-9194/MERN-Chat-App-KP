@@ -1,28 +1,28 @@
-import { createContext, useState, useContext, useEffect } from "react";
-import socket from "./socket-client";
-import auth from "./auth";
+// src/context/AuthUserContext.js
+import {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
+import socket from "../utils/socket-client";
+import auth from "../utils/auth";
 import AuthPageComponent from "../UI/AuthPageComponent";
 
-// 1. Create Context
 export const AuthUser_Info_Context = createContext();
 
-// 2. Custom Hook for easy access
 export const useAuthUserInfo = () => useContext(AuthUser_Info_Context);
-// import io from "socket.io-client";
 
-// 3. Provider Component
 const AuthenUserInfoProvider = ({ children }) => {
-  // Initialize Socket.IO client
-
   const [authUserInfo, setAuthUserInfo] = useState({
-    user: null, // Will store user object
-    selectedChats: [], // Now an array for multiple selected chats
+    user: null,
+    selectedChats: [],
   });
 
-  const [isLastestMessage, setIsLastMessage] = useState(false);
-
   // ✅ Update User Info
-  const updateUserInfo = (newUser) => {
+  const updateUserInfo = useCallback((newUser) => {
     if (newUser && newUser.userId) {
       setAuthUserInfo((prev) => {
         if (prev.user && prev.user.userId === newUser.userId) {
@@ -38,59 +38,53 @@ const AuthenUserInfoProvider = ({ children }) => {
             username: newUser.username,
             user_email: newUser.user_email,
             profile_picture:
-              newUser.profile_picture || "/assets/default-avatar.jpg", // Default avatar if not provided
+              newUser.profile_picture || "/assets/default-avatar.jpg",
           },
         };
       });
     }
-  };
+  }, []);
 
   // ✅ Update selected chats (Add chat if not already selected)
-  const updateSelectedChat = (chat) => {
-    console.log("Updating selected chat:", chat);
+  const updateSelectedChat = useCallback((chat) => {
     if (chat && chat._id) {
       setAuthUserInfo((prev) => {
-        // this will check if the chat is already selected
-        // prev is the previous state of authUserInfo
-        // c is the current chat in the pre selectedChats array
-        // we use some to check if any chat in the selectedChats array has the same _id as the chat we want to add
         const isAlreadySelected = prev.selectedChats.some(
           (c) => c._id === chat._id
         );
-        if (isAlreadySelected) {
-          console.log("You have already selected this chat:", chat);
-          return prev;
-        }
-
-        console.log("Adding selected chat:", chat);
+        if (isAlreadySelected) return prev;
         return {
           ...prev,
           selectedChats: [...prev.selectedChats, chat],
         };
       });
-    } else {
-      console.error("Invalid chat object:", chat);
-      alert("Invalid chat object. Please try again.");
     }
-  };
+  }, []);
 
   // ✅ Replace entire selectedChats array
-  const updateSelectedChats = (newChats) => {
+  const updateSelectedChats = useCallback((newChats) => {
     setAuthUserInfo((prev) => ({
       ...prev,
       selectedChats: newChats,
     }));
-  };
+  }, []);
 
   // ✅ Reset function (for logout)
-  const resetAuthUserInfo = () => {
-    setAuthUserInfo({
-      user: null,
-      selectedChats: [],
-    });
+  const resetAuthUserInfo = useCallback(() => {
+    setAuthUserInfo({ user: null, selectedChats: [] });
+    socket.disconnect();
     alert("You have been logged out.");
     console.log("AuthUser_Info_Context: State has been reset.");
-  };
+  }, []);
+
+  const removeSelectedChat = useCallback((chatId) => {
+    setAuthUserInfo((prev) => ({
+      ...prev,
+      selectedChats: prev.selectedChats.filter(
+        (c) => c._id.toString() !== chatId.toString()
+      ),
+    }));
+  }, []); 
 
   // ✅ Debugging
   useEffect(() => {
@@ -100,7 +94,7 @@ const AuthenUserInfoProvider = ({ children }) => {
   useEffect(() => {
     const userId = authUserInfo.user?._id || authUserInfo.user?.userId;
     if (userId) {
-      socket.connect(); // Connect only when ready
+      socket.connect();
       socket.emit("setupNewChat", {
         _id: userId,
         username: authUserInfo.user.username,
@@ -110,16 +104,9 @@ const AuthenUserInfoProvider = ({ children }) => {
     console.log("Socket connection status:", socket.connected);
   }, [authUserInfo.user]);
 
-  //  run this effect specifically when the token changes,
-  //  then you should extract the token to state or context and use it like this:
-
-  const token = auth.getToken();
-
   useEffect(() => {
-    if (!token) {
-      console.error("No token found");
-      return;
-    }
+    const token = auth.getToken();
+    if (!token) return;
 
     const profile = auth.getProfile();
     if (profile?.data) {
@@ -131,21 +118,32 @@ const AuthenUserInfoProvider = ({ children }) => {
       } = profile.data;
       updateUserInfo({ userId, username, user_email, profile_picture });
     }
-  }, [token, updateUserInfo, authUserInfo]);
+  }, [updateUserInfo]);
+
+  const contextValue = useMemo(
+    () => ({
+      authUserInfo,
+      setAuthUserInfo,
+      updateUserInfo,
+      updateSelectedChat,
+      updateSelectedChats,
+      resetAuthUserInfo,
+      removeSelectedChat,
+    }),
+    // Dependencies array: meaning this will only change if any of these functions change
+    // This is important for performance, so that the context value doesn't change unnecessarily
+    [
+      authUserInfo,
+      updateUserInfo,
+      updateSelectedChat,
+      updateSelectedChats,
+      resetAuthUserInfo,
+      removeSelectedChat,
+    ]
+  );
 
   return auth.loggedIn() ? (
-    <AuthUser_Info_Context.Provider
-      value={{
-        authUserInfo,
-        setAuthUserInfo,
-        updateUserInfo,
-        updateSelectedChat,
-        updateSelectedChats,
-        resetAuthUserInfo,
-        isLastestMessage,
-        setIsLastMessage,
-      }}
-    >
+    <AuthUser_Info_Context.Provider value={contextValue}>
       {children}
     </AuthUser_Info_Context.Provider>
   ) : (
@@ -154,24 +152,3 @@ const AuthenUserInfoProvider = ({ children }) => {
 };
 
 export default AuthenUserInfoProvider;
-
-/*
-  // ✅ Update selected chats (Add chat if not already selected)
-  const updateSelectedChat = (chat) => {
-    if (chat && chat._id) {
-      setAuthUserInfo((prev) => {
-        // Filter out the chat if it exists, then add it to the end
-        const filteredChats = prev.selectedChats.filter(
-          (c) => c._id !== chat._id
-        );
-
-        console.log("Updating selected chats with chat:", chat);
-
-        return {
-          ...prev,
-          selectedChats: [...filteredChats, chat],
-        };
-      });
-    }
-  };
-*/

@@ -10,9 +10,8 @@ import { GET_CHATS_BY_USER } from "../utils/queries";
 function UserList() {
   const { loading, error, data } = useQuery(GET_USERS);
   const [filterValue, setFilterValue] = useState("");
-    const [debouncedFilter, setDebouncedFilter] = useState("");
+  const [debouncedFilter, setDebouncedFilter] = useState("");
   const { authUserInfo, updateSelectedChat } = useAuthUserInfo();
- 
 
   // ✅ Debounce: wait 300ms after user stops typing
   /*
@@ -34,6 +33,13 @@ function UserList() {
     }, 300);
     return () => clearTimeout(handler);
   }, [filterValue]);
+
+
+
+
+
+
+
 
   /*
   1. debouncedFilter.trim() !== ""
@@ -77,7 +83,7 @@ If the input is empty, we don't show any users:
 : [];
 
   */
-  
+
   // Use useMemo to optimize performance by memoizing the filtered users
   // This reduces the number of re-renders and API calls, improving performance.
   // what useMemo does is it returns a memoized value, which means it will only recompute the filtered users when debouncedFilter or data changes.
@@ -95,66 +101,60 @@ If the input is empty, we don't show any users:
       : [];
   }, [debouncedFilter, data]);
 
+  const [createChat] = useMutation(CREATE_CHAT, {
+    onCompleted: (data) => {
+      console.log("Chat created successfully:", data);
+      // Optionally, you can update the UI or redirect the user after creating the chat
+      alert(` ${data.createChat.chat_name} created successfully!`);
+    },
+    onError: (error) => {
+      console.error("Error creating chat:", error);
+    },
+  });
 
+  const handleUserClick = async (userId, username) => {
+    if (authUserInfo.user?.userId === userId) {
+      alert("You cannot create a chat with yourself.");
+      return;
+    }
 
-    
-    const [createChat] = useMutation(CREATE_CHAT, {
-        onCompleted: (data) => {
-            console.log("Chat created successfully:", data);
-            // Optionally, you can update the UI or redirect the user after creating the chat
-        alert(` ${data.createChat.chat_name} created successfully!`);
-        
-        }
-        ,
-        onError: (error) => {
-            console.error("Error creating chat:", error);
-        }
-    });
+    // Check if chat already exists
+    console.log(authUserInfo);
+    const existChat = authUserInfo.selectedChats.find(
+      (chat) =>
+        chat.users.some((user) => user._id === userId) &&
+        chat.users.some((user) => user._id === authUserInfo.user?.userId)
+    );
 
-    const handleUserClick = async (userId, username) => {
-      if (authUserInfo.user?.userId === userId) {
-          alert("You cannot create a chat with yourself.");
-          return;
-        
-      }
+    if (existChat) {
+      alert("Chat already exists.");
+      return;
+    }
 
-      // Check if chat already exists
-      console.log(authUserInfo);
-      const existChat = authUserInfo.selectedChats.find(
-        (chat) =>
-          chat.users.some((user) => user._id === userId) &&
-          chat.users.some((user) => user._id === authUserInfo.user?.userId)
-      );
-
-      if (existChat) {
-        alert("Chat already exists.");
-        return;
-      }
-
-      try {
-        const { data: mutationData } = await createChat({
-          variables: {
-            chat_name: `${authUserInfo.user?.username} & ${username}`,
-            users: [userId],
-          },
-          refetchQueries: [
-     
-            { query: GET_CHATS_BY_USER, variables: { userId: authUserInfo.user?.userId || authUserInfo.user?._id } }, // Refetch chats for the current user
-          ],
-        });
-        // console.log("Chat created:", mutationData);
-        updateSelectedChat(mutationData.createChat);
-        console.log("Selected chat updated:", authUserInfo);
-        return mutationData.createChat;
-      } catch (error) {
-        console.error("Error creating chat:", error);
-        return null;
-      }
+    try {
+      const { data: mutationData } = await createChat({
+        variables: {
+          chat_name: `${authUserInfo.user?.username} & ${username}`,
+          users: [userId],
+        },
+        refetchQueries: [
+          {
+            query: GET_CHATS_BY_USER,
+            variables: {
+              userId: authUserInfo.user?.userId || authUserInfo.user?._id,
+            },
+          }, // Refetch chats for the current user
+        ],
+      });
+      // console.log("Chat created:", mutationData);
+      updateSelectedChat(mutationData.createChat);
+      console.log("Selected chat updated:", authUserInfo);
+      return mutationData.createChat;
+    } catch (error) {
+      console.error("Error creating chat:", error);
+      return null;
+    }
   };
-  
-
-      
-      
 
   if (loading) return <Spinner size="lg" />;
   if (error) return <Text color="red.500">Error: {error.message}</Text>;
