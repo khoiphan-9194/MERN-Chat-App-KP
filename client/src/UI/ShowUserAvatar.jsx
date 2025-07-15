@@ -12,6 +12,10 @@ const ShowUserAvatar = ({ activeProfile, setActiveProfile }) => {
   // which will remove the popup from the screen
   useEffect(() => {
     const handleOutsideClick = (event) => {
+      // ask: is the click outside the popup?
+      // if so, set the activeProfile to null
+      // this will remove the popup from the screen
+      // !popupRef.current.contains(event.target) means that the click is outside the popup
       if (popupRef.current && !popupRef.current.contains(event.target)) {
         setActiveProfile(null);
       }
@@ -26,6 +30,8 @@ const ShowUserAvatar = ({ activeProfile, setActiveProfile }) => {
 
   return (
     <div
+      // since we use useRef to create a reference to the popup,
+      // we can use the ref attribute to attach the popupRef to the div
       ref={popupRef}
       style={{
         position: "fixed", // Fixed to viewport!
