@@ -186,27 +186,3 @@ export default AuthenUserInfoProvider;
   };
 */
 
-
-
-/*
-return (
-    auth.loggedIn() ? (
-      <AuthUser_Info_Context.Provider
-        value={{
-          authUserInfo,
-          setAuthUserInfo,
-          updateUserInfo,
-          updateSelectedChat,
-          updateSelectedChats,
-          resetAuthUserInfo,
-          isLastestMessage,
-          setIsLastMessage,
-        }}
-      >
-        {children}
-      </AuthUser_Info_Context.Provider>
-    ) : (
-      <div>Please log in to access this feature.</div>
-    )
-  );
-*/
