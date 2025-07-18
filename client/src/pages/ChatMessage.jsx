@@ -1,29 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery, useMutation } from "@apollo/client";
 import { GET_CHAT_MESSAGES } from "../utils/queries";
-import { SEND_MESSAGE } from "../utils/mutations";
+import { SEND_MESSAGE, MARK_MESSAGE_AS_SEEN } from "../utils/mutations";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 import ScrollableChat from "../UI/ScrollableChat";
 import socket from "../utils/socket-client"; // Import the Socket.IO client instance
 
+function ChatMessage({ chatId }) {
+  const { authUserInfo, enterChat, exitChat } = useAuthUserInfo();
 
-
-function ChatMessage({ chatId }) 
-{
-  const { authUserInfo } = useAuthUserInfo();
   const userId = authUserInfo.user?.userId || authUserInfo.user?._id;
+  const [inputValue, setInputValue] = useState("");
 
   const { loading, error, data, refetch } = useQuery(GET_CHAT_MESSAGES, {
     variables: { chatId },
     skip: !chatId,
   });
 
-  const [inputValue, setInputValue] = useState("");
-
   useEffect(() => {
     if (!chatId) return;
 
     socket.emit("joinChat", chatId);
+    // enterChat will set the currentChatId in the context
+    // This allows us to track which chat the user is currently in
+    // once user enters a chat, we can start listening for new messages
+    enterChat(chatId); // from AuthUser_Info_Context.jsx
 
     const handleNewMessage = (messageData) => {
       if (messageData.chatId === chatId) {
@@ -31,23 +32,25 @@ function ChatMessage({ chatId })
       }
     };
 
+    // Listen for new messages in the current chat
+    // This will trigger when a new message is sent in the chat
     socket.on("newMessage", handleNewMessage);
 
     return () => {
       socket.off("newMessage", handleNewMessage);
+      exitChat(); //  updates your currentChatId state in the context
     };
-  }, [chatId, refetch]);
+  }, [chatId, refetch, enterChat, exitChat]);
 
   // Refetch when forced (e.g., when clicking a chat with unseen messages)
   useEffect(() => {
-    if (chatId) // Check if forceRefetch is true and chatId is valid
-    {
-     //alert("Refetching messages for chat: " + chatId);
-    refetch();
+    if (chatId) {
+      // Check if forceRefetch is true and chatId is valid
+      //alert("Refetching messages for chat: " + chatId);
+      refetch();
       // This will trigger a refetch of messages for the current chat
-      
     }
-  }, [ chatId, refetch]); // ✅ Refetch messages when forceRefetch changes
+  }, [chatId, refetch]); // ✅ Refetch messages when forceRefetch changes
 
   const [sendMessage] = useMutation(SEND_MESSAGE, {
     onCompleted: () => {
@@ -93,8 +96,8 @@ function ChatMessage({ chatId })
         maxHeight: "500px",
         border: "1px solid #e0e0e0",
         borderRadius: "10px",
-        background: "rgba(255, 255, 255, 0.5)",  
-        overflow: "hidden", //overflow hidden to prevent scrollbars, meaning  
+        background: "rgba(255, 255, 255, 0.5)",
+        overflow: "hidden", //overflow hidden to prevent scrollbars, meaning
         boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
       }}
     >

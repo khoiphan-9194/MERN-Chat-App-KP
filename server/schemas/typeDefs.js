@@ -24,6 +24,8 @@ type Message {
   message_content: String
   chatRoom: Chat
   createdAt: String
+  isSeen: Boolean
+
 }
 
 type Auth {
@@ -45,9 +47,11 @@ type Mutation {
   login(user_email: String!, password: String!): Auth
   createChat(chat_name: String!, users: [ID!]!): Chat
   addMessage(chatId: ID!, message_content: String!): Message
+  markMessageAsSeen(messageId: ID!): Message
   updateChat(chatId: ID!, chat_name: String, users: [ID!]): Chat
   deleteChat(chatId: ID!): Chat
   verifyCurrentUserPassword(userId: ID!, currentPassword: String!): Boolean
+  isOnlineUser(userId: ID!): User
  
 }
 `;

@@ -19,6 +19,10 @@ const messageSchema = new Schema(
       ref: "Chat",
       required: true,
     },
+    isSeen: {
+      type: Boolean,
+      default: false, // Default to false, meaning the message is not seen
+    },
 
   },
   {

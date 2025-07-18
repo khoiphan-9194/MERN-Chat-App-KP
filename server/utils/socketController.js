@@ -1,7 +1,9 @@
 module.exports = (io) => {
+  
   io.on("connection", (socket) => {
     console.log(`✅ New client connected: ${socket.id}`);
 
+    // this event will let the client join a specific chat room
     socket.on("joinChat", (chatId) => {
       if (typeof chatId !== "string") return;
       socket.join(chatId); // Join the chat room with the given chatId
@@ -21,8 +23,39 @@ module.exports = (io) => {
         _id: userData._id,
         username: userData.username,
       });
-
     });
+
+    
+
+    // chatId is the ID of the chat room
+    // messageData is the data of the message that was sent
+  socket.on("messageReceived", ({ chatId, messageData }) => {
+  if (!chatId || !messageData) return;
+
+      const senderId = messageData.message_sender._id; // Get the sender's ID from the message data
+      if (!senderId) return;
+
+  // Broadcast to everyone in the chat except the sender 
+  socket.to(chatId).emit("notifyMessage", {
+    chatId,
+    message: messageData,
+  }); // how to use notifyMessage in the client side
+    
+
+  // Optional: Broadcast to user’s personal room if they’re not in chatId
+  messageData.chat.users.forEach((user) => {
+    if (user._id !== senderId) {
+      // Send a notification to each recipient's personal room
+      io.to(user._id).emit("notifyMessage", {
+        chatId,
+        message: messageData,
+      });
+    }
+  });
+
+  console.log(`🔔 Notification sent to users in chat ${chatId}`);
+});
+
 
 
 

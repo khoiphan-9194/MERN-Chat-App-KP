@@ -1,4 +1,3 @@
-// src/context/AuthUserContext.js
 import {
   createContext,
   useState,
@@ -6,13 +5,15 @@ import {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
 } from "react";
 import socket from "../utils/socket-client";
 import auth from "../utils/auth";
 import AuthPageComponent from "../UI/AuthPageComponent";
+import { useMutation } from "@apollo/client";
+import { MARK_MESSAGE_AS_SEEN } from "../utils/mutations";
 
 export const AuthUser_Info_Context = createContext();
-
 export const useAuthUserInfo = () => useContext(AuthUser_Info_Context);
 
 const AuthenUserInfoProvider = ({ children }) => {
@@ -21,7 +22,25 @@ const AuthenUserInfoProvider = ({ children }) => {
     selectedChats: [],
   });
 
-  // ✅ Update User Info
+  // we use this Later, when a new message is received via Socket.IO:
+  // You can compare if chatId !== currentChatId
+  // If it’s different → show a notification (sound, badge, toast, etc.)
+  // If it's the same → don't notify because the user is already in that chat
+  const [currentChatId, setCurrentChatId] = useState(null);
+  const currentChatIdRef = useRef(null);
+  const [markMessageAsSeen] = useMutation(MARK_MESSAGE_AS_SEEN);
+
+  const enterChat = useCallback((chatId) => {
+    setCurrentChatId(chatId);
+  }, []);
+
+  const exitChat = useCallback(() => {
+    setCurrentChatId(null);
+  }, []);
+
+  // ✅ Update User Info, this function will update the user info in the context
+  // It will not update if the user already exists
+  // once the user logs in, this function will be called to update the user info
   const updateUserInfo = useCallback((newUser) => {
     if (newUser && newUser.userId) {
       setAuthUserInfo((prev) => {
@@ -29,7 +48,6 @@ const AuthenUserInfoProvider = ({ children }) => {
           console.log("User already exists, skipping update.");
           return prev;
         }
-
         console.log("Updating user:", newUser);
         return {
           ...prev,
@@ -46,6 +64,7 @@ const AuthenUserInfoProvider = ({ children }) => {
   }, []);
 
   // ✅ Update selected chats (Add chat if not already selected)
+  // This function will update or add a chat to the selectedChats array in the context
   const updateSelectedChat = useCallback((chat) => {
     if (chat && chat._id) {
       setAuthUserInfo((prev) => {
@@ -61,7 +80,7 @@ const AuthenUserInfoProvider = ({ children }) => {
     }
   }, []);
 
-  // ✅ Replace entire selectedChats array
+  // ✅ Update selected chats with a new array of chats
   const updateSelectedChats = useCallback((newChats) => {
     setAuthUserInfo((prev) => ({
       ...prev,
@@ -69,14 +88,7 @@ const AuthenUserInfoProvider = ({ children }) => {
     }));
   }, []);
 
-  // ✅ Reset function (for logout)
-  const resetAuthUserInfo = useCallback(() => {
-    setAuthUserInfo({ user: null, selectedChats: [] });
-    socket.disconnect();
-    alert("You have been logged out.");
-    console.log("AuthUser_Info_Context: State has been reset.");
-  }, []);
-
+  // ✅ Remove a chat from the selectedChats array
   const removeSelectedChat = useCallback((chatId) => {
     setAuthUserInfo((prev) => ({
       ...prev,
@@ -84,13 +96,25 @@ const AuthenUserInfoProvider = ({ children }) => {
         (c) => c._id.toString() !== chatId.toString()
       ),
     }));
-  }, []); 
+  }, []);
 
-  // ✅ Debugging
+  // ✅ Reset function (for logout)
+  const resetAuthUserInfo = useCallback(() => {
+    setAuthUserInfo({ user: null, selectedChats: [] });
+    setCurrentChatId(null);
+    socket.disconnect();
+    alert("You have been logged out.");
+  }, []);
+
+  // Sync currentChatId to ref
+  // this allows us to access the latest chatId without causing re-renders
+  // every time currentChatId changes, useEffect will run
+  // currentChatIdRef will always have the latest value
   useEffect(() => {
-    console.log("AuthUser_Info_Context updated:", authUserInfo);
-  }, [authUserInfo]);
+    currentChatIdRef.current = currentChatId;
+  }, [currentChatId]);
 
+  // Connect socket and emit setup
   useEffect(() => {
     const userId = authUserInfo.user?._id || authUserInfo.user?.userId;
     if (userId) {
@@ -104,6 +128,7 @@ const AuthenUserInfoProvider = ({ children }) => {
     console.log("Socket connection status:", socket.connected);
   }, [authUserInfo.user]);
 
+  // Fetch user from token on initial load
   useEffect(() => {
     const token = auth.getToken();
     if (!token) return;
@@ -120,6 +145,45 @@ const AuthenUserInfoProvider = ({ children }) => {
     }
   }, [updateUserInfo]);
 
+  // Listen for incoming messages
+  useEffect(() => {
+    const userId = authUserInfo.user?._id || authUserInfo.user?.userId;
+    if (!userId) return;
+
+    const handleNotification = ({ chatId, messageData }) => {
+      const activeChatId = currentChatIdRef.current;
+      if (chatId !== activeChatId) {
+        alert(
+          `📨 New message in chat ${chatId}: ${messageData.message_content}`
+        );
+      } else {
+        markMessageAsSeen({
+          variables: { messageId: messageData._id },
+        })
+          .then(() => {
+            console.log("✅ Message marked as seen:", messageData._id);
+            alert(`Message marked as seen`);
+          })
+          .catch((error) => {
+            console.error("Error marking as seen:", error);
+          });
+      }
+    };
+
+    socket.on("messageReceived", handleNotification);
+    console.log("✅ Socket listener for messageReceived registered");
+
+    return () => {
+      socket.off("messageReceived", handleNotification);
+    };
+  }, [authUserInfo.user, markMessageAsSeen]); // authUserInfo.user means
+  // the useEffect will run when the user logs in or out, and markMessageAsSeen is a function that can be called to mark messages as seen
+
+  // Debugging
+  useEffect(() => {
+    console.log("AuthUser_Info_Context updated:", authUserInfo);
+  }, [authUserInfo]);
+
   const contextValue = useMemo(
     () => ({
       authUserInfo,
@@ -129,6 +193,9 @@ const AuthenUserInfoProvider = ({ children }) => {
       updateSelectedChats,
       resetAuthUserInfo,
       removeSelectedChat,
+      currentChatId,
+      enterChat,
+      exitChat,
     }),
     // Dependencies array: meaning this will only change if any of these functions change
     // This is important for performance, so that the context value doesn't change unnecessarily
@@ -139,6 +206,9 @@ const AuthenUserInfoProvider = ({ children }) => {
       updateSelectedChats,
       resetAuthUserInfo,
       removeSelectedChat,
+      enterChat,
+      currentChatId,
+      exitChat,
     ]
   );
 

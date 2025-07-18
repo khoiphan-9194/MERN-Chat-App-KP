@@ -6,6 +6,7 @@ import { Form, Button, Alert } from 'react-bootstrap';
 
 
 
+
 import Auth from '../utils/auth';
 
 const Login = () => {
@@ -13,6 +14,7 @@ const Login = () => {
   const [login, { error, data }] = useMutation(USER_LOGIN);
   const [validated] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+ 
 
   // update state based on form input changes
   const handleChange = (event) => {
@@ -41,6 +43,8 @@ const Login = () => {
       console.log(token)
       Auth.login(token);
       console.log(token);
+   
+
     } catch (e) {
       console.error(e);
     }

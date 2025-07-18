@@ -5,8 +5,7 @@
 import Login from "../components/Login";
 import Signup from "../components/Signup";
 import { Box, Container, Text, Tabs } from "@chakra-ui/react";
-import { Link } from "react-router-dom";
-import auth from "../utils/auth";
+
 
 
 

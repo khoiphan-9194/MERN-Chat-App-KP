@@ -98,3 +98,20 @@ export const DELETE_CHAT = gql`
     }
   }
 `;
+
+export const MARK_MESSAGE_AS_SEEN = gql`
+  mutation markMessageAsSeen($messageId: ID!) {
+    markMessageAsSeen(messageId: $messageId) {
+      _id
+      isSeen
+    }
+  }
+`;
+export const IS_ONLINE_USER = gql`
+  mutation isOnlineUser($userId: ID!) {
+    isOnlineUser(userId: $userId) {
+      _id
+      isOnline
+    }
+  }
+`;

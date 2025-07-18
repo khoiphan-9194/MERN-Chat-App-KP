@@ -1,3 +1,4 @@
+
 const { User, Chat, Message } = require("../models");
 const { signToken, AuthenticationError } = require("../utils/auth");
 
@@ -38,14 +39,14 @@ const resolvers = {
       if (!context.user) {
         throw new AuthenticationError("You need to be logged in to view chats");
       }
-        // we will return all chats that the user is part of
-        // and that the user can see (userVisibility is true)
-        // this will ensure that the user can only see chats that they are part of and that
-        // they have visibility to, preventing them from seeing chats they are not part of
-        // and that they have visibility to
-        // this is important because we want to ensure that the user can only see chats that they
-        // are part of and that they have visibility to, preventing them from seeing chats they are not part of
-        // and that they have visibility to
+      // we will return all chats that the user is part of
+      // and that the user can see (userVisibility is true)
+      // this will ensure that the user can only see chats that they are part of and that
+      // they have visibility to, preventing them from seeing chats they are not part of
+      // and that they have visibility to
+      // this is important because we want to ensure that the user can only see chats that they
+      // are part of and that they have visibility to, preventing them from seeing chats they are not part of
+      // and that they have visibility to
       return Chat.find({
         users: context.user._id,
         [`userVisibility.${context.user._id}`]: true,
@@ -142,6 +143,7 @@ const resolvers = {
       }
 
       const token = signToken(user);
+
       return { token, user };
     },
     updateUser: async (
@@ -372,6 +374,7 @@ const resolvers = {
         message_sender: user._id,
         message_content: message_content.trim(),
         chatRoom: chatId,
+        isSeen: false, // Default to false, meaning the message is not seen
       });
 
       // 6. Update the chat's latest message
@@ -446,7 +449,62 @@ const resolvers = {
         }
       }
 
+      // ✅ Also emit a messageReceived event (same data) for notification purposes
+      // This sends an event from the frontend (client) to the backend (server) over a WebSocket connection.
+      // It’s like saying: "Hey server! I’ve just sent a message in this chat. Let others know."
+      io.to(chatId).emit("messageReceived", {
+        chatId,
+        messageData: populatedMessage,
+      });
+
+      console.log(`✅ Socket emitted messageReceived for chat ${chatId}`);
+
       return populatedMessage;
+    },
+    markMessageAsSeen: async (_, { messageId }, context) => {
+      const { user } = context;
+      if (!user) throw new AuthenticationError("Not logged in");
+
+      const message = await Message.findById(messageId);
+      if (!message) throw new Error("Message not found");
+
+      const chat = await Chat.findById(message.chatRoom);
+      if (!chat) throw new Error("Chat not found");
+
+      const isSender =
+        message.message_sender.toString() === user._id.toString();
+      const isParticipant = chat.users.some(
+        (id) => id.toString() === user._id.toString()
+      );
+
+      if (!isParticipant || isSender) {
+        throw new Error("Only the recipient can mark this message as seen.");
+      }
+
+      message.isSeen = true;
+      await message.save();
+
+      return message;
+    },
+    isOnlineUser: async (_, { userId }, context) => {
+      if (!context.user) {
+        throw new AuthenticationError(
+          "You need to be logged in to check online status"
+        );
+      }
+      if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new Error("Invalid user ID format");
+      }
+
+      const Update_isOnlineUser = await User.findById(userId);
+      if (!Update_isOnlineUser) {
+        throw new Error("User not found");
+      }
+      // Toggle the isOnline status
+      Update_isOnlineUser.isOnline = !Update_isOnlineUser.isOnline;
+      await Update_isOnlineUser.save();
+
+      return Update_isOnlineUser;
     },
   },
 };
