@@ -8,21 +8,13 @@ import { displayTime } from "../utils/helpers"; // Import the displayTime functi
 import ChatDeletion from "../components/ChatDeletion"; // Import the ChatDeletion component
 import { useMutation } from "@apollo/client";
 import { MARK_MESSAGE_AS_SEEN } from "../utils/mutations";
+import { IoMdArrowRoundForward } from "react-icons/io";
 function MyChat({ userId, setCurrentChat }) {
-  const {
-    updateSelectedChat,
-    authUserInfo,
-    updateIsSeenMessage,
-    update_UnSeenMessageIDs,
-    isSeenMessage,
-  } = useAuthUserInfo();
+  const { updateSelectedChat, authUserInfo, updateMessageAsSeen } =useAuthUserInfo();
   const { loading, error, data, refetch } = useQuery(GET_CHATS_BY_USER, {
     variables: { userId },
     skip: !userId,
   });
-  
-
-
 
   // chats = useMemo(() => data?.chatsByUser || [], [data])
   // useMemo is used to memoize the chats array so that it does not get recalculated on every render
@@ -114,18 +106,17 @@ function MyChat({ userId, setCurrentChat }) {
     };
   }, [refetch]);
 
-
-
-
-
-  const handleViewChat = (chat) => {
+  const handleViewChat = async (chat) => {
     setCurrentChat(chat); // Only updates the currently *viewed* chat
-    
+    await updateMessageAsSeen(chat.latestMessage._id);
+    //alert(`isSeen status updated for chat: ${chat.latestMessage.isSeen}`);
     refetch(); // Refetch to ensure latest messages are loaded
   };
 
   if (loading) return <Text>Loading chats...</Text>;
   if (error) return <Text color="red.500">Error: {error.message}</Text>;
+
+  // Import the icon from react-icons
 
   return (
     <Box
@@ -139,7 +130,7 @@ function MyChat({ userId, setCurrentChat }) {
       height="500px"
       overflowY="auto"
       border={"3px solid rgb(28, 99, 222,0.5)"}
-      boxShadow="3px 3px 10px rgba(232, 241, 248, 0.5)"
+      boxShadow="3px 3px 10px rgba(232, 241, 248, 0.5)" 
     >
       {chats.length > 0 ? (
         chats.map((chat) => (
@@ -152,9 +143,6 @@ function MyChat({ userId, setCurrentChat }) {
             cursor="pointer"
           >
             <ChatDeletion chatId={chat._id} />{" "}
-            {/* Add ChatDeletion component */}
-            {/* 
-            Display chat name and latest message */}
             <Box
               p="3"
               mb="2"
@@ -170,8 +158,6 @@ function MyChat({ userId, setCurrentChat }) {
                   <>
                     <b>{chat.latestMessage.message_sender?.username}:</b>{" "}
                     {chat.latestMessage.message_content}
-               
-                    
                     <Text
                       fontSize="2xs"
                       color="gray.400"
@@ -179,6 +165,9 @@ function MyChat({ userId, setCurrentChat }) {
                       letterSpacing="wider"
                       fontStyle="normal"
                       lineHeight="shorter"
+                      display="flex"
+                      alignItems="center"
+                      gap="1"
                     >
                       {chat.latestMessage?.createdAt && (
                         <>
@@ -187,8 +176,27 @@ function MyChat({ userId, setCurrentChat }) {
                           </span>
                         </>
                       )}
-                   
-                    
+
+                      {chat.latestMessage.message_sender?._id === userId ? (
+                        <IoMdArrowRoundForward color="green" style={{
+                          marginLeft: 3,
+                          fontSize: "1.5em"
+                         }} />
+                      ) : (
+                        !chat.latestMessage.isSeen && (
+                          // Unseen icon (using a Chakra UI red dot)
+                          <Box
+                            as="span"
+                            ml={2}
+                            w="10px"
+                            h="10px"
+                            borderRadius="full"
+                            bg="red.500"
+                            display="inline-block"
+                            title="Unseen"
+                          />
+                        )
+                      )}
                     </Text>
                   </>
                 ) : (

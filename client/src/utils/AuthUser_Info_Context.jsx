@@ -31,8 +31,21 @@ const AuthenUserInfoProvider = ({ children }) => {
   const [update_MessageAsSeen] = useMutation(UPDATE_MESSAGE_AS_SEEN);
   const [markMessageAsSeen] = useMutation(MARK_MESSAGE_AS_SEEN);
   const [isOnlineUser] = useMutation(IS_ONLINE_USER);
-  const [isSeenMessage, setIsSeenMessage] = useState(null);
-  const [unSeenMessageIDs, setUnSeenMessageIDs] = useState([]);
+  // const [isSeenMessage, setIsSeenMessage] = useState(null);
+  // const [unSeenMessageIDs, setUnSeenMessageIDs] = useState([]);
+
+
+  const updateMessageAsSeen = useCallback(
+    async (messageId) => {
+      try {
+        await update_MessageAsSeen({ variables: { messageId } });
+      } catch (error) {
+        console.error("Error updating message as seen:", error);
+      }
+    },
+    [update_MessageAsSeen] // [update_MessageAsSeen] ensures this function is stable and doesn't change on every render
+    // unless the definition of update_MessageAsSeen changes
+  );
 
   const enterChat = useCallback((chatId) => {
     setCurrentChatId(chatId);
@@ -110,27 +123,7 @@ const AuthenUserInfoProvider = ({ children }) => {
     alert("You have been logged out.");
   }, []);
 
-  // const [isSeenMessage, setIsSeenMessage] = useState(false);
-  // const [unSeenMessageIDs, setUnSeenMessageIDs] = useState([]);
-
-  const update_UnSeenMessageIDs = useCallback((messageId) => {
-    setUnSeenMessageIDs((prev) => {
-      if (!prev.includes(messageId)) {
-        return [...prev, messageId];
-      }
-      return prev;
-    });
-  }, []);
-
-  const clear_UnSeenMessageIDs = useCallback(() => {
-    setUnSeenMessageIDs([]);
-  }, []);
-
-  const updateIsSeenMessage = useCallback((value) => {
-    setIsSeenMessage(!!value);
-    return !!value;
-  }, []);
-
+  
   // Sync currentChatId to ref
   // this allows us to access the latest chatId without causing re-renders
   // every time currentChatId changes, useEffect will run
@@ -197,20 +190,7 @@ const AuthenUserInfoProvider = ({ children }) => {
        
       } else {
         // ✅ User is in the same chat room → mark message as seen
-        try {
-          const { data } = await update_MessageAsSeen({
-            variables: { messageId: messageData._id },
-          });
-
-          if (data.updateMessageAsSeen) {
-            console.log("✅ Message marked as seen:", messageData._id)
-            // Optionally, you can also update the chat state here if needed
-          } else {
-            console.log("🟡 Message already seen");
-          }
-        } catch (error) {
-          console.error("❌ Error marking message as seen:", error);
-        }
+        await updateMessageAsSeen(messageData._id);
       }
     };
 
@@ -224,9 +204,8 @@ const AuthenUserInfoProvider = ({ children }) => {
     authUserInfo.user,
     markMessageAsSeen,
     update_MessageAsSeen,
-    updateIsSeenMessage,
-    update_UnSeenMessageIDs,
     currentChatIdRef,
+    updateMessageAsSeen,
   ]);
 
 
@@ -247,10 +226,7 @@ const AuthenUserInfoProvider = ({ children }) => {
       currentChatId,
       enterChat,
       exitChat,
-      isSeenMessage,
-      updateIsSeenMessage,
-      unSeenMessageIDs,
-      update_UnSeenMessageIDs,
+      updateMessageAsSeen,
     }),
     // Dependencies array: meaning this will only change if any of these functions change
     // This is important for performance, so that the context value doesn't change unnecessarily
@@ -264,14 +240,12 @@ const AuthenUserInfoProvider = ({ children }) => {
       enterChat,
       currentChatId,
       exitChat,
-      isSeenMessage,
-      updateIsSeenMessage,
-      unSeenMessageIDs,
-      update_UnSeenMessageIDs,
+      updateMessageAsSeen,
     ]
   );
 
-  return auth.loggedIn() ? (
+  // Render the provider or AuthPageComponent based on authentication
+  return authUserInfo.user ? (
     <AuthUser_Info_Context.Provider value={contextValue}>
       {children}
     </AuthUser_Info_Context.Provider>

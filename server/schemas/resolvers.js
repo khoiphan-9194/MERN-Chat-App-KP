@@ -462,7 +462,8 @@ const resolvers = {
       const chat = await Chat.findById(message.chatRoom);
       if (!chat) throw new Error("Chat not found");
 
-      const isSender =message.message_sender.toString() === user._id.toString();
+      const isSender =
+        message.message_sender.toString() === user._id.toString();
       const isParticipant = chat.users.some(
         (id) => id.toString() === user._id.toString()
       ); // Check if the user is part of the chat
@@ -482,10 +483,10 @@ const resolvers = {
     markMessageAsSeen: async (_, { messageId }, context) => {
       const { user } = context;
       if (!user) throw new AuthenticationError("Not logged in");
-       const message = await Message.findById(messageId);
+      const message = await Message.findById(messageId);
       if (!message) throw new Error("Message not found");
-      if (message.isSeen) //
-      {
+      if (message.isSeen) {
+        //
         return false; // If true, we skip updating and return false to indicate no change was made.
       }
       //If it was not previously seen, set isSeen = true.
@@ -493,9 +494,8 @@ const resolvers = {
       message.isSeen = true;
       await message.save();
       return true; // Successfully marked as seen
-
     },
-      
+
     isOnlineUser: async (_, { userId, isOnline }, context) => {
       if (!context.user) {
         throw new AuthenticationError(
