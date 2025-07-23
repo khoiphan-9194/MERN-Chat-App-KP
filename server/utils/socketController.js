@@ -1,63 +1,71 @@
 module.exports = (io) => {
-  
   io.on("connection", (socket) => {
     console.log(`✅ New client connected: ${socket.id}`);
 
     // this event will let the client join a specific chat room
+    // when the client emits "joinChat" with a chatId,
+    // the server will join the socket to that chat room
     socket.on("joinChat", (chatId) => {
       if (typeof chatId !== "string") return;
       socket.join(chatId); // Join the chat room with the given chatId
       console.log(`✅ Socket ${socket.id} joined chat room: ${chatId}`);
     });
 
-
-    // socket.on("setup") is used to set up the socket connection
-    // it is used to listen for the "setup" event from the client
-    // when the client creates a new chat with a user,
+    // this event will let the logged-in user set up their personal room
+    // when the client emits "setupNewChat" with user data,
+    // the server will listen for this event and join the socket to the user's personal room
     socket.on("setupNewChat", (userData) => {
       if (!userData || !userData._id) return;
       socket.join(userData._id);
       console.log(`User ${userData.username} joined room ${userData._id}`);
-      // Emit an event to notify that the user has joined their personal room
+      // when listening to this event,
+      // the server will emit a "userJoined" event to notify all clients
       io.to(userData._id).emit("userJoined", {
         _id: userData._id,
         username: userData.username,
       });
     });
 
-    
+    // this event will let the server notify all users in the chat room about a new chat room
+    // when the client emits "newChatRoom" with chat data,
+    // the server will broadcast this event to all users in the chat room
+    socket.on("newChatRoom", (chat) => {
+      if (!chat || !chat._id) return;
+      // Notify all users in the chat room about the new chat
+      io.to(chat._id).emit("notifyNewChatRoom", chat);
+    });
 
+    // this event will let the server notify all users in the chat room about a new message
+    // when the client emits "sendMessage" with chatId and messageData,
+    // the server will broadcast this event to all users in the chat room
     // chatId is the ID of the chat room
     // messageData is the data of the message that was sent
-  socket.on("messageReceived", ({ chatId, messageData }) => {
-  if (!chatId || !messageData) return;
+    socket.on("messageReceived", ({ chatId, messageData }) => {
+      if (!chatId || !messageData) return;
 
       const senderId = messageData.message_sender._id; // Get the sender's ID from the message data
       if (!senderId) return;
 
-  // Broadcast to everyone in the chat except the sender 
-  socket.to(chatId).emit("notifyMessage", {
-    chatId,
-    message: messageData,
-  }); // how to use notifyMessage in the client side
-    
-
-  // Optional: Broadcast to user’s personal room if they’re not in chatId
-  messageData.chat.users.forEach((user) => {
-    if (user._id !== senderId) {
-      // Send a notification to each recipient's personal room
-      io.to(user._id).emit("notifyMessage", {
+      // Broadcast to everyone in the chat except the sender
+      // This will notify all users in the chat room about the new message
+      socket.to(chatId).emit("notifyMessage", {
         chatId,
         message: messageData,
+      }); 
+
+      // Optional: Broadcast to user’s personal room if they’re not in chatId
+      messageData.chat.users.forEach((user) => {
+        if (user._id !== senderId) {
+          // Send a notification to each recipient's personal room
+          io.to(user._id).emit("notifyMessage", {
+            chatId,
+            message: messageData,
+          });
+        }
       });
-    }
-  });
 
-  console.log(`🔔 Notification sent to users in chat ${chatId}`);
-});
-
-
-
+      console.log(`🔔 Notification sent to users in chat ${chatId}`);
+    });
 
     //socket.on ("sendMessaage") plays a role that
     // when a message is sent from the client,
@@ -77,8 +85,6 @@ module.exports = (io) => {
     });
   });
 };
-
-
 
 /*
 socket.on("sendMessage", ({ chatId, messageData }) => {
@@ -111,12 +117,6 @@ Therefore, on the client side:
 
     You call socket.emit("sendMessage", data) to send a message to the server.
 */
-
-
-
-
-
-
 
 /*
 so what it means between socket.on and io.emit
@@ -193,4 +193,4 @@ Server notifies ALL clients	io.emit	Broadcast the new message to everyone
         io.emit (or io.to(room).emit) to broadcast.
 
 
-*/ 
+*/

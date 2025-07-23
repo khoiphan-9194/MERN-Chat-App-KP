@@ -47,12 +47,14 @@ type Mutation {
   login(user_email: String!, password: String!): Auth
   createChat(chat_name: String!, users: [ID!]!): Chat
   addMessage(chatId: ID!, message_content: String!): Message
-  markMessageAsSeen(messageId: ID!): Message
+  update_MessageAsSeen(messageId: ID!): Message
+  markMessageAsSeen(messageId: ID!): Boolean
   updateChat(chatId: ID!, chat_name: String, users: [ID!]): Chat
   deleteChat(chatId: ID!): Chat
   verifyCurrentUserPassword(userId: ID!, currentPassword: String!): Boolean
-  isOnlineUser(userId: ID!): User
- 
+  isOnlineUser(userId: ID!, isOnline: Boolean!): User
+  markUserOnline(userId: ID!): User
+  markUserOffline(userId: ID!): User
 }
 `;
 module.exports = typeDefs;

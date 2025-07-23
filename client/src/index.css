@@ -41,3 +41,46 @@ body {
 .profile-img:hover {
   opacity: 0.8;
 }
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.online {
+  background-color: #4ade80;
+  /* Tailwind green-400 */
+  animation: pulse 1.2s infinite;
+  box-shadow: 0 0 0 rgba(74, 222, 128, 0.7);
+}
+
+.offline {
+  background-color: #9ca3af;
+  /* Tailwind gray-400 */
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+  }
+
+  70% {
+    transform: scale(1.4);
+    box-shadow: 0 0 0 6px rgba(74, 222, 128, 0);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+  }
+}

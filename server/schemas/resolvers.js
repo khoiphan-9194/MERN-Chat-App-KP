@@ -55,7 +55,7 @@ const resolvers = {
         .populate({
           path: "latestMessage",
           populate: {
-            select: "-__v -password createdAt",
+            select: "-__v -password createdAt isSeen message_content",
             path: "message_sender",
             select: "-__v -password",
           },
@@ -235,27 +235,6 @@ const resolvers = {
         userVisibility,
       });
 
-      // ✅ Emit to the users involved in the chat
-      // what it does is that it will emit the new chat to all users in the chat room,
-      // so that they can receive the new chat in real-time without having to refresh the page
-      // IMPORTANT: Access io from context! because io will be passed from the server to the context
-      // when the user connects to the server, so that we can use it in the resolvers
-      // without this, we cannot access io in the resolvers
-      // const io = context.io;
-
-      // if (io) {
-      //   // Emit to the users involved in the chat
-      //   for (const userId of users) {
-      //     io.to(userId).emit("newChatRoom", chat); // notify the target users
-      //     console.log(`from resolvers: New chat room created for user ${userId}`);
-      //   }
-      //   io.to(context.user._id).emit("newChatRoom", chat); // Also emit to creator
-      //   console.log(
-      //     `from resolvers: creator, New chat room created for user ${context.user._id}`
-      //   );
-      // } else {
-      //   console.warn("No io instance in context, skipping emit");
-      // }
       return chat;
     },
 
@@ -269,11 +248,17 @@ const resolvers = {
       if (!chat) {
         throw new Error("Chat not found");
       }
-      if (chat.groupAdmin.toString() !== context.user._id.toString()) {
+      // if (chat.groupAdmin.toString() !== context.user._id.toString()) {
+      //   throw new AuthenticationError(
+      //     "You are not authorized to delete this chat"
+      //   );
+      // }
+
+      if (chat.userVisibility.get(context.user._id.toString()) !== true) {
         throw new AuthenticationError(
           "You are not authorized to delete this chat"
         );
-      }
+      } // means that the user must be part of the chat and have visibility to true to delete it
       // before deleting the chat, we need to delete all messages in the chat
       await Message.deleteMany({ chatRoom: chatId }); // Delete all messages associated with the chat
       // Now delete the chat itself
@@ -374,7 +359,7 @@ const resolvers = {
         message_sender: user._id,
         message_content: message_content.trim(),
         chatRoom: chatId,
-        isSeen: false, // Default to false, meaning the message is not seen
+        // isSeen: false, // Default to false, meaning the message is not seen
       });
 
       // 6. Update the chat's latest message
@@ -443,8 +428,14 @@ const resolvers = {
       if (isFirstMessage) {
         for (const userId of chat.users) {
           if (userId.toString() !== user._id.toString()) {
-            io.to(userId.toString()).emit("newChatRoom", chat);
-            console.log(`✅ Notified User ${userId} of new chat room.`);
+            io.to(userId.toString()).emit("notifyNewChatRoom", chat);
+            io.to(userId.toString()).emit("messageReceived", {
+              chatId,
+              messageData: populatedMessage,
+            });
+            console.log(
+              `✅ Notified User ${userId} of new chat room and first message.`
+            );
           }
         }
       }
@@ -461,7 +452,7 @@ const resolvers = {
 
       return populatedMessage;
     },
-    markMessageAsSeen: async (_, { messageId }, context) => {
+    update_MessageAsSeen: async (_, { messageId }, context) => {
       const { user } = context;
       if (!user) throw new AuthenticationError("Not logged in");
 
@@ -471,11 +462,10 @@ const resolvers = {
       const chat = await Chat.findById(message.chatRoom);
       if (!chat) throw new Error("Chat not found");
 
-      const isSender =
-        message.message_sender.toString() === user._id.toString();
+      const isSender =message.message_sender.toString() === user._id.toString();
       const isParticipant = chat.users.some(
         (id) => id.toString() === user._id.toString()
-      );
+      ); // Check if the user is part of the chat
 
       if (!isParticipant || isSender) {
         throw new Error("Only the recipient can mark this message as seen.");
@@ -486,7 +476,27 @@ const resolvers = {
 
       return message;
     },
-    isOnlineUser: async (_, { userId }, context) => {
+
+    //  markMessageAsSeen(messageId: ID!): Boolean
+    // it will return true or false depending on whether the message was marked as seen or not
+    markMessageAsSeen: async (_, { messageId }, context) => {
+      const { user } = context;
+      if (!user) throw new AuthenticationError("Not logged in");
+       const message = await Message.findById(messageId);
+      if (!message) throw new Error("Message not found");
+      if (message.isSeen) //
+      {
+        return false; // If true, we skip updating and return false to indicate no change was made.
+      }
+      //If it was not previously seen, set isSeen = true.
+      // Save the updated message back to the database.
+      message.isSeen = true;
+      await message.save();
+      return true; // Successfully marked as seen
+
+    },
+      
+    isOnlineUser: async (_, { userId, isOnline }, context) => {
       if (!context.user) {
         throw new AuthenticationError(
           "You need to be logged in to check online status"
@@ -496,15 +506,29 @@ const resolvers = {
         throw new Error("Invalid user ID format");
       }
 
-      const Update_isOnlineUser = await User.findById(userId);
-      if (!Update_isOnlineUser) {
-        throw new Error("User not found");
-      }
-      // Toggle the isOnline status
-      Update_isOnlineUser.isOnline = !Update_isOnlineUser.isOnline;
-      await Update_isOnlineUser.save();
+      return await User.findByIdAndUpdate(userId, { isOnline }, { new: true });
+    },
 
-      return Update_isOnlineUser;
+    markUserOnline: async (_, { userId }, context) => {
+      if (!context.user || context.user._id !== userId) {
+        throw new AuthenticationError("Unauthorized.");
+      }
+      return await User.findByIdAndUpdate(
+        userId,
+        { isOnline: true },
+        { new: true }
+      );
+    },
+
+    markUserOffline: async (_, { userId }, context) => {
+      if (!context.user || context.user._id !== userId) {
+        throw new AuthenticationError("Unauthorized.");
+      }
+      return await User.findByIdAndUpdate(
+        userId,
+        { isOnline: false },
+        { new: true }
+      );
     },
   },
 };

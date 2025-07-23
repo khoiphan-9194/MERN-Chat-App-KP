@@ -33,6 +33,7 @@ query chatsByUser($userId: ID!) {
         profile_picture
       }
       createdAt
+      isSeen
     }
   }
 }

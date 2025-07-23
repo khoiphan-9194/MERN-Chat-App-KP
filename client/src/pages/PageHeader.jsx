@@ -14,12 +14,22 @@ import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 import AvatarDropDownMenu from "../UI/AvatarDropDownMenu";
 import { Link } from "react-router-dom";
 import DateTime from "../components/Date";
+import { useMutation } from "@apollo/client";
+import { IS_ONLINE_USER } from "../utils/mutations";
 
 //rfce
 function PageHeader() {
   const { resetAuthUserInfo, authUserInfo } = useAuthUserInfo();
-  const handleLogout = () => {
+  const [isOnlineUser] = useMutation(IS_ONLINE_USER);
+  const handleLogout = async () => {
     resetAuthUserInfo();
+    // Call the mutation to set the user as offline
+    await isOnlineUser({
+      variables: {
+        userId: authUserInfo.user?.userId || auth.getProfile().data._id,
+        isOnline: false,
+      },
+    });
     auth.logout();
 
   };

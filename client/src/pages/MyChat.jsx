@@ -1,4 +1,4 @@
-import { useEffect, useRef ,useMemo } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useQuery } from "@apollo/client";
 import { GET_CHATS_BY_USER } from "../utils/queries";
 import { Box, Text } from "@chakra-ui/react";
@@ -6,13 +6,23 @@ import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 import socket from "../utils/socket-client"; // Import the Socket.IO client instance+
 import { displayTime } from "../utils/helpers"; // Import the displayTime function
 import ChatDeletion from "../components/ChatDeletion"; // Import the ChatDeletion component
-
+import { useMutation } from "@apollo/client";
+import { MARK_MESSAGE_AS_SEEN } from "../utils/mutations";
 function MyChat({ userId, setCurrentChat }) {
-  const { updateSelectedChat, authUserInfo } = useAuthUserInfo();
+  const {
+    updateSelectedChat,
+    authUserInfo,
+    updateIsSeenMessage,
+    update_UnSeenMessageIDs,
+    isSeenMessage,
+  } = useAuthUserInfo();
   const { loading, error, data, refetch } = useQuery(GET_CHATS_BY_USER, {
     variables: { userId },
     skip: !userId,
   });
+  
+
+
 
   // chats = useMemo(() => data?.chatsByUser || [], [data])
   // useMemo is used to memoize the chats array so that it does not get recalculated on every render
@@ -89,21 +99,28 @@ function MyChat({ userId, setCurrentChat }) {
       // we check as long as user sent a message to the chat room, we will refetch the chats
       if (!chatData || !chatData._id) return;
       console.log("New chat room created:", chatData);
+
       refetch();
+      socket.emit("joinChat", chatData._id); // as long as a new chat room is created
+      // we will join the chat room
     };
 
     // every time this component will always listen for new chat rooms
     // and if a new chat room is created, we will refetch the chats
-    socket.on("newChatRoom", handleNewChatRoom);
+    socket.on("notifyNewChatRoom", handleNewChatRoom);
 
     return () => {
-      socket.off("newChatRoom", handleNewChatRoom);
+      socket.off("notifyNewChatRoom", handleNewChatRoom);
     };
   }, [refetch]);
 
+
+
+
+
   const handleViewChat = (chat) => {
     setCurrentChat(chat); // Only updates the currently *viewed* chat
-
+    
     refetch(); // Refetch to ensure latest messages are loaded
   };
 
@@ -136,10 +153,8 @@ function MyChat({ userId, setCurrentChat }) {
           >
             <ChatDeletion chatId={chat._id} />{" "}
             {/* Add ChatDeletion component */}
-
             {/* 
             Display chat name and latest message */}
-         
             <Box
               p="3"
               mb="2"
@@ -155,6 +170,8 @@ function MyChat({ userId, setCurrentChat }) {
                   <>
                     <b>{chat.latestMessage.message_sender?.username}:</b>{" "}
                     {chat.latestMessage.message_content}
+               
+                    
                     <Text
                       fontSize="2xs"
                       color="gray.400"
@@ -170,6 +187,8 @@ function MyChat({ userId, setCurrentChat }) {
                           </span>
                         </>
                       )}
+                   
+                    
                     </Text>
                   </>
                 ) : (
@@ -333,8 +352,6 @@ socket.on("newMessage")	Listens for new messages sent by others.
 refetch()	Keeps the selected chat up-to-date with new messages.
 socket.off	Cleans up listeners to prevent bugs and leaks.
   */
-
-
 
 /*
 Note #4

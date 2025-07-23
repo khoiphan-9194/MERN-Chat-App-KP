@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useQuery, useMutation } from "@apollo/client";
 import { GET_CHAT_MESSAGES } from "../utils/queries";
-import { SEND_MESSAGE, MARK_MESSAGE_AS_SEEN } from "../utils/mutations";
+import { SEND_MESSAGE, UPDATE_MESSAGE_AS_SEEN } from "../utils/mutations";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 import ScrollableChat from "../UI/ScrollableChat";
 import socket from "../utils/socket-client"; // Import the Socket.IO client instance
@@ -18,6 +18,8 @@ function ChatMessage({ chatId }) {
   });
 
   useEffect(() => {
+
+    
     if (!chatId) return;
 
     socket.emit("joinChat", chatId);
@@ -25,9 +27,11 @@ function ChatMessage({ chatId }) {
     // This allows us to track which chat the user is currently in
     // once user enters a chat, we can start listening for new messages
     enterChat(chatId); // from AuthUser_Info_Context.jsx
-
     const handleNewMessage = (messageData) => {
       if (messageData.chatId === chatId) {
+        // If the new message is in the current chat, refetch messages
+        // so that every time user sends a new message,
+        // we will refetch the messages to update the UI
         refetch();
       }
     };
@@ -41,6 +45,7 @@ function ChatMessage({ chatId }) {
       exitChat(); //  updates your currentChatId state in the context
     };
   }, [chatId, refetch, enterChat, exitChat]);
+
 
   // Refetch when forced (e.g., when clicking a chat with unseen messages)
   useEffect(() => {

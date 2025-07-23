@@ -96,7 +96,9 @@ If the input is empty, we don't show any users:
       ? data?.users?.filter(
           (user) =>
             user?.username &&
-            user.username.toLowerCase().includes(debouncedFilter.toLowerCase())
+          user.username.toLowerCase().includes(debouncedFilter.toLowerCase())
+        
+            
         ) || []
       : [];
   }, [debouncedFilter, data]);
@@ -190,9 +192,33 @@ If the input is empty, we don't show any users:
                 _hover={{ bg: "teal.100", cursor: "pointer" }}
                 onClick={() => handleUserClick(user._id, user.username)}
               >
-                <Text fontWeight="bold">{user.username}</Text>
+                <Text
+                  fontWeight="bold"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  {user.username}
+                  <span
+                    style={{
+                      marginLeft: "4px",
+                      fontSize: "0.7em",
+                      alignSelf: "flex-end",
+                    }}
+                  >
+                    {/* {user.isOnline ? "🟢" : "🔴"} */}
+                    <div className="status-indicator">
+                      <span
+                        className={`dot ${user.isOnline ? "online" : "offline"}`}
+                      ></span>
+                      <span className="status-text">
+                        {user.isOnline ? "Online" : "Offline"}
+                      </span>
+                    </div>
+                  </span>
+                </Text>
                 <Text fontSize="sm" color="gray.600">
-                  {user.email}
+                  {user.user_email}
                 </Text>
               </Box>
             ))

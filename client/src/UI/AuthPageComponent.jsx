@@ -1,16 +1,7 @@
-// TODO: Add a comment explaining how we are able to extract the key value pairs from props
-//this currentPage and handlePageChange were destructed from props
-
 
 import Login from "../components/Login";
 import Signup from "../components/Signup";
-import { Box, Container, Text, Tabs } from "@chakra-ui/react";
-
-
-
-
-
-
+import { Box, Container, Text, Tabs } from "@chakra-ui/react"
 
 function AuthPageComponent() {
   return (

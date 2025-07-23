@@ -2,6 +2,8 @@ import { Box, Heading, Text, Button, VStack, Stack } from "@chakra-ui/react";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 import { Link } from "react-router-dom";
 import auth from "../utils/auth";
+import { useMutation } from "@apollo/client";
+import { IS_ONLINE_USER } from "../utils/mutations";
 
 
 function Homepage() {
@@ -9,10 +11,19 @@ function Homepage() {
   const loggedIn = auth.loggedIn();
   const username = loggedIn ? auth.getProfile().data.username : "";
   const profile_picture = loggedIn ? auth.getProfile().data.profile_picture : "";
+  const [isOnlineUser] = useMutation(IS_ONLINE_USER);
 
-    const { resetAuthUserInfo } = useAuthUserInfo();
-    const handleLogout = () => {
+    const { resetAuthUserInfo, authUserInfo } = useAuthUserInfo();
+    const handleLogout = async () => {
       resetAuthUserInfo();
+      // Call the mutation to set the user as offline
+      await isOnlineUser({
+        variables: {
+          userId: authUserInfo.user?.userId || auth.getProfile().data._id,
+          isOnline: false,
+        },
+      })
+
       auth.logout();
   
     };

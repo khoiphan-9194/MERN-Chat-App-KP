@@ -68,10 +68,7 @@ mutation createChat ($chat_name: String!, $users: [ID!]!) {
 
 export const VERIFY_CURRENT_PASSWORD = gql`
   mutation verifyCurrentUserPassword($userId: ID!, $currentPassword: String!) {
-    verifyCurrentUserPassword(
-      userId: $userId
-      currentPassword: $currentPassword
-    )
+    verifyCurrentUserPassword(userId: $userId, currentPassword: $currentPassword)
   }
 `;
 
@@ -99,19 +96,29 @@ export const DELETE_CHAT = gql`
   }
 `;
 
-export const MARK_MESSAGE_AS_SEEN = gql`
-  mutation markMessageAsSeen($messageId: ID!) {
-    markMessageAsSeen(messageId: $messageId) {
+export const UPDATE_MESSAGE_AS_SEEN = gql`
+  mutation update_MessageAsSeen($messageId: ID!) {
+    update_MessageAsSeen(messageId: $messageId) {
       _id
       isSeen
     }
   }
 `;
+export const MARK_MESSAGE_AS_SEEN = gql`
+  mutation markMessageAsSeen($messageId: ID!) {
+    markMessageAsSeen(messageId: $messageId)
+
+  }
+`;
+
+
 export const IS_ONLINE_USER = gql`
-  mutation isOnlineUser($userId: ID!) {
-    isOnlineUser(userId: $userId) {
+  mutation isOnlineUser($userId: ID!, $isOnline: Boolean!) {
+    isOnlineUser(userId: $userId, isOnline: $isOnline) {
       _id
+      username
       isOnline
     }
   }
 `;
+
