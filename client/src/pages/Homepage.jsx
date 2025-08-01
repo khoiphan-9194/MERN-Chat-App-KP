@@ -5,29 +5,28 @@ import auth from "../utils/auth";
 import { useMutation } from "@apollo/client";
 import { IS_ONLINE_USER } from "../utils/mutations";
 
-
 function Homepage() {
-  
   const loggedIn = auth.loggedIn();
   const username = loggedIn ? auth.getProfile().data.username : "";
-  const profile_picture = loggedIn ? auth.getProfile().data.profile_picture : "";
+  const profile_picture = loggedIn
+    ? auth.getProfile().data.profile_picture
+    : "";
   const [isOnlineUser] = useMutation(IS_ONLINE_USER);
 
-    const { resetAuthUserInfo, authUserInfo } = useAuthUserInfo();
-    const handleLogout = async () => {
-      resetAuthUserInfo();
-      // Call the mutation to set the user as offline
-      await isOnlineUser({
-        variables: {
-          userId: authUserInfo.user?.userId || auth.getProfile().data._id,
-          isOnline: false,
-        },
-      })
+  const { resetAuthUserInfo, authUserInfo } = useAuthUserInfo();
+  const handleLogout = async () => {
+    resetAuthUserInfo();
+    // Call the mutation to set the user as offline
+    await isOnlineUser({
+      variables: {
+        userId: authUserInfo.user?.userId || auth.getProfile().data._id,
+        isOnline: false,
+      },
+    });
 
-      auth.logout();
-  
-    };
-  
+    auth.logout();
+  };
+
   return (
     <Box
       minHeight="80vh"
@@ -85,7 +84,7 @@ function Homepage() {
             <>
               <Button
                 as={Link}
-                to={`/mychat/${auth.getProfile().data._id}`}
+                to={`/userID/${auth.getProfile().data._id}`}
                 colorScheme="teal"
                 size="lg"
                 fontWeight="bold"
@@ -94,7 +93,7 @@ function Homepage() {
               >
                 Go to My Chats 💌
               </Button>
-              
+
               <Button
                 size="lg"
                 fontWeight="bold"

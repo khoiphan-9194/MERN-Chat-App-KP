@@ -1,42 +1,42 @@
 import { gql } from "@apollo/client";
 
-export const GET_USERS = gql` 
-query users {
-  users {
-    _id
-    username
-    user_email
-    profile_picture
-    isOnline
-  }
-}
-`;
-
-export const GET_CHATS_BY_USER = gql`
-query chatsByUser($userId: ID!) {
-  chatsByUser(userId: $userId) {
-    _id
-    chat_name
+export const GET_USERS = gql`
+  query users {
     users {
       _id
       username
       user_email
       profile_picture
+      isOnline
     }
-    latestMessage {
+  }
+`;
+
+export const GET_CHATS_BY_USER = gql`
+  query chatsByUser($userId: ID!) {
+    chatsByUser(userId: $userId) {
       _id
-      message_content
-      message_sender {
+      chat_name
+      users {
         _id
         username
         user_email
         profile_picture
       }
-      createdAt
-      isSeen
+      latestMessage {
+        _id
+        message_content
+        message_sender {
+          _id
+          username
+          user_email
+          profile_picture
+        }
+        createdAt
+        isSeen
+      }
     }
   }
-}
 `;
 
 export const GET_CHAT_MESSAGES = gql`
@@ -65,13 +65,45 @@ export const GET_CHAT_MESSAGES = gql`
 `;
 
 export const QUERY_SINGLE_USER = gql`
-query user($userId: ID!) {
-user(userId: $userId) {
-  _id
-  username
-  user_email
-  profile_picture
-  isOnline
-}
-}
+  query user($userId: ID!) {
+    user(userId: $userId) {
+      _id
+      username
+      user_email
+      profile_picture
+      isOnline
+    }
+  }
+`;
+export const GET_NOTIFICATIONS = gql`
+  query getNotifications($userId: ID!) {
+    getNotifications(userId: $userId) {
+      _id
+      notify_recipient {
+        _id
+        username
+        user_email
+      }
+      notify_sender {
+        _id
+        username
+        user_email
+      }
+      chatRoom {
+        _id
+        chat_name
+      }
+      notificationMessageIds {
+        _id
+        message_content
+        message_sender {
+          _id
+          username
+          user_email
+          profile_picture
+        }
+      }
+      createdAt
+    }
+  }
 `;

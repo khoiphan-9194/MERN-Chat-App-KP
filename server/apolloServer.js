@@ -11,7 +11,6 @@ const cors = require("cors"); // this is for cross-origin resource sharing, what
 // cross-origin resource sharing (CORS) is a mechanism that helps you manage how your web application interacts with resources from different origins. It allows you to specify which domains are allowed to access your resources, and what methods and headers are permitted.
 // and it is a security feature implemented by web browsers to prevent malicious websites from making requests to your server on behalf of the user.
 
-
 const { typeDefs, resolvers } = require("./schemas");
 const db = require("./config/connection");
 
@@ -29,9 +28,8 @@ const allowedOrigins = ["http://localhost:3000", process.env.CLIENT_URL].filter(
 // This is useful for development and production environments where the client URL may change
 // Without this, the server would only accept requests from localhost, which is not ideal for production
 
-
 const io = socketIO(httpServer, {
-  pingTimeout: 60000,// this means that if the server does not receive a ping from the client within 60 seconds, it will disconnect the client
+  pingTimeout: 60000, // this means that if the server does not receive a ping from the client within 60 seconds, it will disconnect the client
   pingInterval: 25000, // this means that the server will send a ping to the client every 25 seconds
   cors: {
     origin: allowedOrigins,
@@ -44,7 +42,6 @@ socketController(io);
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-
 });
 
 const startApolloServer = async () => {
@@ -54,7 +51,7 @@ const startApolloServer = async () => {
   app.use(express.json());
   app.use(cors());
 
- // See Note #2
+  // See Note #2
   app.use(
     "/graphql",
     expressMiddleware(server, {
@@ -66,10 +63,7 @@ const startApolloServer = async () => {
 
   // Need to use the routes after the GraphQL middleware
   // This will allow us to have both GraphQL and RESTful API routes in the same
-    app.use(routes); //restful API routes (see Note #3)
-
-  
-
+  app.use(routes); //restful API routes (see Note #3)
 
   if (process.env.NODE_ENV === "production") {
     app.use(express.static(path.join(__dirname, "../client/dist")));
@@ -88,7 +82,6 @@ const startApolloServer = async () => {
 };
 
 startApolloServer();
-
 
 /* Note #2:
 ✅ Correct GraphQL middleware with both auth and io in context
@@ -114,10 +107,7 @@ startApolloServer();
   );
   */
 
-
-
-
-  /* Note #3:
+/* Note #3:
   we need to use the routes after the GraphQL middleware 
   because the GraphQL middleware will handle the /graphql endpoint
   and we want the RESTful API routes to be available at /api

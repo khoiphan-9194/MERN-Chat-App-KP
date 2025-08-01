@@ -1,11 +1,10 @@
-
-const { User, Chat, Message } = require("../models");
+const { User, Chat, Message, Notification } = require("../models");
 const { signToken, AuthenticationError } = require("../utils/auth");
 
 const resolvers = {
   Query: {
     users: async () => {
-      return User.find().select("-__v -password");
+      return await User.find().select("-__v -password");
     },
 
     user: async (parent, { userId }) => {
@@ -24,7 +23,7 @@ const resolvers = {
     },
 
     chats: async () => {
-      return Chat.find()
+      return await Chat.find()
         .populate("users", "-__v -password")
         .populate({
           path: "latestMessage",
@@ -47,7 +46,7 @@ const resolvers = {
       // this is important because we want to ensure that the user can only see chats that they
       // are part of and that they have visibility to, preventing them from seeing chats they are not part of
       // and that they have visibility to
-      return Chat.find({
+      return await Chat.find({
         users: context.user._id,
         [`userVisibility.${context.user._id}`]: true,
       }) // Only show chat if it's visible to the user
@@ -63,7 +62,7 @@ const resolvers = {
     },
 
     chat: async (parent, { _id }) => {
-      return Chat.findById(_id)
+      return await Chat.findById(_id)
         .populate("users", "-__v -password")
         .populate("latestMessage");
     },
@@ -95,7 +94,7 @@ const resolvers = {
       ) {
         throw new Error("You are not a member of this chat");
       }
-      return Message.find({ chatRoom: chatId })
+      return await Message.find({ chatRoom: chatId })
         .populate({
           path: "message_sender",
           select: "-__v -password",
@@ -114,6 +113,22 @@ const resolvers = {
             },
           ],
         });
+    },
+    getNotifications: async (_, { userId }, context) => {
+      if (!context.user) {
+        throw new AuthenticationError(
+          "You need to be logged in to view notifications"
+        );
+      }
+      if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new Error("Invalid user ID format");
+      }
+      return await Notification.find({ notify_recipient: userId })
+        .sort({ createdAt: -1 }) // Sort by creation date, most recent first
+        .populate("notify_sender", "-__v -password")
+        .populate("notify_recipient", "-__v -password")
+        .populate("chatRoom", "-__v")
+        .populate("notificationMessageIds", "-__v -password");
     },
   },
   Mutation: {
@@ -401,10 +416,21 @@ const resolvers = {
       await chat.save();
 
       // 7. Populate message sender info
-      const populatedMessage = await message.populate(
-        "message_sender",
-        "username"
-      );
+      const populatedMessage = await Message.findById(message._id)
+        .populate({
+          path: "message_sender",
+          select: "_id username user_email profile_picture",
+        })
+        .populate({
+          path: "chatRoom",
+          select: "chat_name users groupAdmin",
+          populate: [
+            {
+              path: "users",
+              select: "_id username",
+            },
+          ],
+        });
 
       // 8. Emit the new message to the chat room
       io.to(chatId).emit("newMessage", {
@@ -414,8 +440,16 @@ const resolvers = {
         message_sender: {
           _id: populatedMessage.message_sender._id,
           username: populatedMessage.message_sender.username,
+          user_email: populatedMessage.message_sender.user_email,
         },
         createdAt: populatedMessage.createdAt,
+        chatRoom: {
+          _id: populatedMessage.chatRoom._id,
+          chat_name: populatedMessage.chatRoom.chat_name,
+          users: populatedMessage.chatRoom.users,
+
+          groupAdmin: populatedMessage.chatRoom.groupAdmin,
+        },
       });
 
       console.log(`✅ New message sent to chat ${chatId}:`, populatedMessage);
@@ -529,6 +563,139 @@ const resolvers = {
         { isOnline: false },
         { new: true }
       );
+    },
+
+    addNotification: async (
+      _,
+      { notify_recipient, notify_sender, chatRoom, notificationMessageIds },
+      context
+    ) => {
+      if (!context.user) {
+        throw new AuthenticationError(
+          "You need to be logged in to add a notification"
+        );
+      }
+      if (!notify_recipient || !chatRoom || !notificationMessageIds) {
+        throw new Error("All fields are required to create a notification");
+      }
+      if (!notify_recipient.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new Error("Invalid recipient user ID format");
+      }
+      if (!chatRoom.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new Error("Invalid chat room ID format");
+      }
+
+      const notification = await Notification.create({
+        notify_recipient,
+        notify_sender,
+        chatRoom,
+        notificationMessageIds,
+      });
+
+      return notification;
+    },
+    removeNotification: async (_, { notificationId }, context) => {
+      if (!context.user) {
+        throw new AuthenticationError(
+          "You need to be logged in to remove a notification"
+        );
+      }
+      if (!notificationId.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new Error("Invalid notification ID format");
+      }
+
+      const notification = await Notification.findByIdAndDelete(notificationId);
+      if (!notification) {
+        throw new Error("Notification not found");
+      }
+
+      return notification;
+    },
+
+    updateNotification: async (
+      _,
+      {
+        notificationId,
+        notify_recipient,
+        notify_sender,
+        chatRoom,
+        notificationMessageIds,
+      },
+      context
+    ) => {
+      if (!context.user) {
+        throw new AuthenticationError(
+          "You need to be logged in to update a notification"
+        );
+      }
+
+      if (!notificationId.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new Error("Invalid notification ID format");
+      }
+
+      const notificationData = await Notification.findById(notificationId);
+      if (!notificationData) {
+        throw new Error("Notification not found");
+      }
+
+      // Optional: validate new IDs if provided
+      if (notify_recipient && !notify_recipient.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new Error("Invalid recipient ID format");
+      }
+      if (notify_sender && !notify_sender.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new Error("Invalid sender ID format");
+      }
+      if (chatRoom && !chatRoom.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new Error("Invalid chat room ID format");
+      }
+      if (notificationMessageIds && !Array.isArray(notificationMessageIds)) {
+        throw new Error("notificationMessageIds must be an array");
+      }
+
+      // Update fields conditionally
+      if (notify_recipient) notificationData.recipient = notify_recipient;
+      if (notify_sender) notificationData.sender = notify_sender;
+      if (chatRoom) notificationData.chatRoom = chatRoom;
+      if (notificationMessageIds) {
+        // To accumulate new messages, merge arrays instead of replacing:
+
+        const currentIds = notificationData.notificationMessageIds.map((id) =>
+          id.toString()
+        );
+        const newIds = notificationMessageIds.filter(
+          (id) => !currentIds.includes(id) // Only add new IDs that aren't already present in currentIds
+        );
+        notificationData.notificationMessageIds = [...currentIds, ...newIds];
+      }
+
+      await notificationData.save();
+
+      return notificationData;
+    },
+    removeNotificationsByChatRoom: async (_, { chatRoomId }, context) => {
+      if (!context.user) {
+        throw new AuthenticationError(
+          "You need to be logged in to remove notifications"
+        );
+      }
+      if (!chatRoomId.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new Error("Invalid chat room ID format");
+      }
+
+      // Delete all notifications associated with the chat room
+      // This will remove all notifications that have the chatRoom field matching chatRoomId
+      // and return the deleted notifications
+      // If no notifications are found, it will return an empty array
+      // 1. Find the notifications first
+      const notificationsToDelete = await Notification.find({
+        chatRoom: chatRoomId,
+      });
+
+      // 2. Delete them
+      await Notification.deleteMany({ chatRoom: chatRoomId });
+
+      // 3. Return the ones we just deleted
+      return notificationsToDelete;
     },
   },
 };

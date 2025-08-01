@@ -11,7 +11,14 @@ import socket from "../utils/socket-client";
 import auth from "../utils/auth";
 import AuthPageComponent from "../UI/AuthPageComponent";
 import { useMutation } from "@apollo/client";
-import { UPDATE_MESSAGE_AS_SEEN, IS_ONLINE_USER, MARK_MESSAGE_AS_SEEN } from "./mutations";
+import {
+  UPDATE_MESSAGE_AS_SEEN,
+  IS_ONLINE_USER,
+  MARK_MESSAGE_AS_SEEN,
+  ADD_NOTIFICATION,
+  REMOVE_NOTIFICATION,
+  UPDATE_NOTIFICATION,
+} from "../utils/mutations";
 
 export const AuthUser_Info_Context = createContext();
 export const useAuthUserInfo = () => useContext(AuthUser_Info_Context);
@@ -30,10 +37,34 @@ const AuthenUserInfoProvider = ({ children }) => {
   const currentChatIdRef = useRef(null); // this will always have the latest value of currentChatId
   const [update_MessageAsSeen] = useMutation(UPDATE_MESSAGE_AS_SEEN);
   const [markMessageAsSeen] = useMutation(MARK_MESSAGE_AS_SEEN);
+  const [addNotification] = useMutation(ADD_NOTIFICATION);
+  const [removeNotification] = useMutation(REMOVE_NOTIFICATION);
+  const [updateNotification] = useMutation(UPDATE_NOTIFICATION);
   const [isOnlineUser] = useMutation(IS_ONLINE_USER);
   // const [isSeenMessage, setIsSeenMessage] = useState(null);
-  // const [unSeenMessageIDs, setUnSeenMessageIDs] = useState([]);
+  const [unSeenMessageIDs, setUnSeenMessageIDs] = useState([]);
 
+  const updateUnSeenMessageIDs = useCallback((messageId) => {
+    setUnSeenMessageIDs((prevIDs) => {
+      // If the messageId is not already in the array, add it
+      // This ensures we only add unique message IDs
+      if (!prevIDs.includes(messageId)) {
+        return [...prevIDs, messageId];
+      }
+      return prevIDs;
+    });
+  }, []);
+
+  const addNotificationToUser = useCallback(
+    async (notificationData) => {
+      try {
+        await addNotification({ variables: { ...notificationData } });
+      } catch (error) {
+        console.error("Error adding notification:", error);
+      }
+    },
+    [addNotification]
+  );
 
   const updateMessageAsSeen = useCallback(
     async (messageId) => {
@@ -123,7 +154,6 @@ const AuthenUserInfoProvider = ({ children }) => {
     alert("You have been logged out.");
   }, []);
 
-  
   // Sync currentChatId to ref
   // this allows us to access the latest chatId without causing re-renders
   // every time currentChatId changes, useEffect will run
@@ -181,19 +211,38 @@ const AuthenUserInfoProvider = ({ children }) => {
       const activeChatId = currentChatIdRef.current;
 
       const isInActiveChat = chatId === activeChatId;
+      const recipient_userNameID = messageData.chatRoom.users
+        .filter((user) => user.username !== messageData.message_sender.username)
+        .map((user) => user._id)
+        .join(", ");
+      const sender_userNameID = messageData.message_sender._id;
 
       if (!isInActiveChat) {
         // 📩 User is not in the same chat room → show alert & update unseen
-        alert(
-          `📨 New message in chat ${chatId}: ${messageData.message_content}`
-        );
-       
+        // alert(
+        //   `📨 New message in chat ${chatId}: ${messageData.message_content}
+        //   from ${messageData.message_sender.username} to ${recipient_userNameID}`
+        // );
+
+        await addNotificationToUser({
+          notify_recipient: recipient_userNameID,
+          notify_sender: sender_userNameID,
+          chatRoom: chatId,
+          notificationMessageIds: messageData._id,
+        });
       } else {
+        console.log(
+          "✅ User is in the same chat room, updating message as seen:",
+          messageData
+        );
         // ✅ User is in the same chat room → mark message as seen
+
         await updateMessageAsSeen(messageData._id);
       }
     };
 
+    // socket.on means we are listening for the "messageReceived" event from the server
+    // then calling handleNotification when that event occurs
     socket.on("messageReceived", handleNotification);
     console.log("✅ Socket listener for messageReceived registered");
 
@@ -206,8 +255,9 @@ const AuthenUserInfoProvider = ({ children }) => {
     update_MessageAsSeen,
     currentChatIdRef,
     updateMessageAsSeen,
+    updateUnSeenMessageIDs,
+    addNotificationToUser,
   ]);
-
 
   // Debugging
   useEffect(() => {
@@ -227,6 +277,8 @@ const AuthenUserInfoProvider = ({ children }) => {
       enterChat,
       exitChat,
       updateMessageAsSeen,
+      unSeenMessageIDs,
+      updateUnSeenMessageIDs,
     }),
     // Dependencies array: meaning this will only change if any of these functions change
     // This is important for performance, so that the context value doesn't change unnecessarily
@@ -241,6 +293,8 @@ const AuthenUserInfoProvider = ({ children }) => {
       currentChatId,
       exitChat,
       updateMessageAsSeen,
+      unSeenMessageIDs,
+      updateUnSeenMessageIDs,
     ]
   );
 

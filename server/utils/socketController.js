@@ -51,7 +51,7 @@ module.exports = (io) => {
       socket.to(chatId).emit("notifyMessage", {
         chatId,
         message: messageData,
-      }); 
+      });
 
       // Optional: Broadcast to user’s personal room if they’re not in chatId
       messageData.chat.users.forEach((user) => {

@@ -1,11 +1,10 @@
-import  { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 const ShowUserAvatar = ({ activeProfile, setActiveProfile }) => {
   const popupRef = useRef(null);
   if (!activeProfile) return null;
 
   const { top, left } = activeProfile.position;
-
 
   // the useEffect hook is used to close the popup when clicking outside of it
   // basically, when user clicks outside the popup, we set the activeProfile to null

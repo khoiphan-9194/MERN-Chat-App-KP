@@ -1,13 +1,20 @@
 import { useEffect, useState, useRef } from "react";
 import { useQuery, useMutation } from "@apollo/client";
 import { GET_CHAT_MESSAGES } from "../utils/queries";
-import { SEND_MESSAGE, UPDATE_MESSAGE_AS_SEEN } from "../utils/mutations";
+import {
+  SEND_MESSAGE,
+  UPDATE_MESSAGE_AS_SEEN,
+  ADD_NOTIFICATION,
+  REMOVE_NOTIFICATION,
+  UPDATE_NOTIFICATION,
+} from "../utils/mutations";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 import ScrollableChat from "../UI/ScrollableChat";
 import socket from "../utils/socket-client"; // Import the Socket.IO client instance
 
 function ChatMessage({ chatId }) {
   const { authUserInfo, enterChat, exitChat } = useAuthUserInfo();
+  const addNotification = useMutation(ADD_NOTIFICATION);
 
   const userId = authUserInfo.user?.userId || authUserInfo.user?._id;
   const [inputValue, setInputValue] = useState("");
@@ -18,8 +25,6 @@ function ChatMessage({ chatId }) {
   });
 
   useEffect(() => {
-
-    
     if (!chatId) return;
 
     socket.emit("joinChat", chatId);
@@ -45,7 +50,6 @@ function ChatMessage({ chatId }) {
       exitChat(); //  updates your currentChatId state in the context
     };
   }, [chatId, refetch, enterChat, exitChat]);
-
 
   // Refetch when forced (e.g., when clicking a chat with unseen messages)
   useEffect(() => {

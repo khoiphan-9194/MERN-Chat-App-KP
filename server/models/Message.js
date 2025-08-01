@@ -22,8 +22,7 @@ const messageSchema = new Schema(
     isSeen: {
       type: Boolean,
       default: false, // Default to false, meaning the message is not seen
-    }
-
+    },
   },
   {
     timestamps: true, // automatically adds createdAt and updatedAt fields

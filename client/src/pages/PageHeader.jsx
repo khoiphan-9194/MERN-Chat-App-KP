@@ -6,7 +6,7 @@ import {
   CloseButton,
   Drawer,
   Portal,
-  HStack
+  HStack,
 } from "@chakra-ui/react";
 import UserList from "./UserList";
 import auth from "../utils/auth";
@@ -16,6 +16,7 @@ import { Link } from "react-router-dom";
 import DateTime from "../components/Date";
 import { useMutation } from "@apollo/client";
 import { IS_ONLINE_USER } from "../utils/mutations";
+import ChatNotification from "../components/ChatNotification";
 
 //rfce
 function PageHeader() {
@@ -31,7 +32,6 @@ function PageHeader() {
       },
     });
     auth.logout();
-
   };
 
   return (
@@ -100,7 +100,6 @@ function PageHeader() {
               px={6}
               py={3}
               margin={"0 0 0 30px"}
- 
               borderRadius="20px"
               boxShadow="lg"
               display="flex"
@@ -109,9 +108,7 @@ function PageHeader() {
               gap={3}
               border="2px solid"
               borderColor="whiteAlpha.500"
-
             >
-           
               <DateTime />
             </Box>
           </HStack>
@@ -128,16 +125,27 @@ function PageHeader() {
               color="blackAlpha.900"
               fontFamily="'Caveat', cursive"
             >
-             Beetalk
+              Beetalk
             </Text>
           </Link>
 
-          <AvatarDropDownMenu
-            username={auth.getProfile().data.username}
-            profile_picture={authUserInfo.user?.profile_picture}
-            logout={handleLogout}
-            userId={auth.getProfile().data._id}
-          />
+          <Box
+            display="flex"
+            flexDirection="row"
+            alignItems="center"
+            justifyContent="space-evenly"
+            gap={8}
+            width="250px"
+          >
+            <ChatNotification />
+
+            <AvatarDropDownMenu
+              username={auth.getProfile().data.username}
+              profile_picture={authUserInfo.user?.profile_picture}
+              logout={handleLogout}
+              userId={auth.getProfile().data._id}
+            />
+          </Box>
         </Stack>
       </Box>
     </>
@@ -145,17 +153,3 @@ function PageHeader() {
 }
 
 export default PageHeader;
-
-
-
-/*
-     <Button variant="outline-secondary"
-          onClick={() => {
-            handleLogout();
-          }}
-          > 
-            <span role="img" aria-label="logout" style={{ fontSize: "1.2em" }}>
-              🚪 Logout
-            </span>
-          </Button>
-*/

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Box, Text, Stack } from "@chakra-ui/react";
 
 import PageHeader from "./PageHeader";
@@ -13,20 +13,38 @@ function ChatPage() {
   const { authUserInfo } = useAuthUserInfo();
   const { selectedCurrentChat, setSelectedCurrentChat } = useChatContext();
 
+  const [chatRoomInfo, setChatRoomInfo] = useState({}); // holds processed chat data if selectedCurrentChat is in array format
+
   useEffect(() => {
     if (selectedCurrentChat) {
-      // Log the selected chat whenever it changes
-      console.log("Selected Current Chat:", selectedCurrentChat);
+      // When chat is selected and it's an array (from MyChat list)
+      if (!selectedCurrentChat._id && Array.isArray(selectedCurrentChat)) {
+        const [senderName, chatDetails] = selectedCurrentChat;
+
+        const formattedChatData = {
+          sender: senderName,
+          chatId: Array.from(chatDetails.chatRoomIds).join(", "),
+          chatName: Array.from(chatDetails.chatRoomNames).join(", "),
+        };
+
+        setChatRoomInfo(formattedChatData);
+      }
     }
   }, [selectedCurrentChat]);
 
   // Get chat name to display in header
   const displayedChatName =
-    selectedCurrentChat?.chat_name || selectedCurrentChat?.chatRoomName || "";
+    selectedCurrentChat?.chat_name ||
+    (Array.isArray(selectedCurrentChat)
+      ? Array.from(selectedCurrentChat[1].chatRoomNames).join(", ")
+      : chatRoomInfo.chatName);
 
   // Get chat ID to pass into ChatMessage component
   const currentChatId =
-    selectedCurrentChat?._id || selectedCurrentChat?.chatRoomId || "";
+    selectedCurrentChat?._id ||
+    (Array.isArray(selectedCurrentChat)
+      ? Array.from(selectedCurrentChat[1].chatRoomIds).join(", ")
+      : chatRoomInfo.chatId);
 
   return (
     <main>

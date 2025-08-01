@@ -6,11 +6,11 @@ import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 import socket from "../utils/socket-client"; // Import the Socket.IO client instance+
 import { displayTime } from "../utils/helpers"; // Import the displayTime function
 import ChatDeletion from "../components/ChatDeletion"; // Import the ChatDeletion component
-import { useMutation } from "@apollo/client";
-import { MARK_MESSAGE_AS_SEEN } from "../utils/mutations";
 import { IoMdArrowRoundForward } from "react-icons/io";
+
 function MyChat({ userId, setCurrentChat }) {
-  const { updateSelectedChat, authUserInfo, updateMessageAsSeen } =useAuthUserInfo();
+  const { updateSelectedChat, authUserInfo, updateMessageAsSeen } =
+    useAuthUserInfo();
   const { loading, error, data, refetch } = useQuery(GET_CHATS_BY_USER, {
     variables: { userId },
     skip: !userId,
@@ -107,6 +107,7 @@ function MyChat({ userId, setCurrentChat }) {
   }, [refetch]);
 
   const handleViewChat = async (chat) => {
+    console.log("Viewing chat:", chat);
     setCurrentChat(chat); // Only updates the currently *viewed* chat
     await updateMessageAsSeen(chat.latestMessage._id);
     //alert(`isSeen status updated for chat: ${chat.latestMessage.isSeen}`);
@@ -130,7 +131,7 @@ function MyChat({ userId, setCurrentChat }) {
       height="500px"
       overflowY="auto"
       border={"3px solid rgb(28, 99, 222,0.5)"}
-      boxShadow="3px 3px 10px rgba(232, 241, 248, 0.5)" 
+      boxShadow="3px 3px 10px rgba(232, 241, 248, 0.5)"
     >
       {chats.length > 0 ? (
         chats.map((chat) => (
@@ -178,10 +179,13 @@ function MyChat({ userId, setCurrentChat }) {
                       )}
 
                       {chat.latestMessage.message_sender?._id === userId ? (
-                        <IoMdArrowRoundForward color="green" style={{
-                          marginLeft: 3,
-                          fontSize: "1.5em"
-                         }} />
+                        <IoMdArrowRoundForward
+                          color="green"
+                          style={{
+                            marginLeft: 3,
+                            fontSize: "1.5em",
+                          }}
+                        />
                       ) : (
                         !chat.latestMessage.isSeen && (
                           // Unseen icon (using a Chakra UI red dot)

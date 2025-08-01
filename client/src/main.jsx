@@ -27,17 +27,17 @@ const router = createBrowserRouter([
         element: <Homepage />,
       },
       {
-        path: "/mychat/:userId",
+        path: "/userID/:userId",
         element: <ChatPage />,
       },
-      {
-        path: "/mychat/:chatId",
-        element: <MyChat />,
-      },
-      {
-        path: "/mychat/:userId/:chatId",
-        element: <ChatMessage />,
-      },
+      // {
+      //   path: "/mychat/:chatId",
+      //   element: <MyChat />,
+      // },
+      // {
+      //   path: "/myMessages/:chatId",
+      //   element: <ChatMessage />,
+      // },
       {
         path: "/settings/:userId",
         element: <ProfileSetting />,

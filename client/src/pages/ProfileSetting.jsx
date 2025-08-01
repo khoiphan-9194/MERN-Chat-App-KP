@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import Auth from "../utils/auth";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 
-import {uploadAvatar} from "../utils/API"; // Import the uploadAvatar function
+import { uploadAvatar } from "../utils/API"; // Import the uploadAvatar function
 
 const ProfileSetting = () => {
   const [isClicked, setIsClicked] = useState(false);
@@ -204,7 +204,6 @@ const ProfileSetting = () => {
       await uploadAvatar(formData); // Call the uploadAvatar function to upload the image
       // Log the response or do something with it
       console.log("Image uploaded successfully:", formData);
- 
     } catch (err) {
       console.error("Error uploading image:", err);
     }
@@ -341,7 +340,10 @@ const ProfileSetting = () => {
               <input
                 type="text"
                 name="image"
-                value={formUpdateUser.profile_picture.replace("../userAvatar/", "")} // Remove the leading "../" for display
+                value={formUpdateUser.profile_picture.replace(
+                  "../userAvatar/",
+                  ""
+                )} // Remove the leading "../" for display
                 onChange={handleChange}
                 style={{
                   width: "100%",

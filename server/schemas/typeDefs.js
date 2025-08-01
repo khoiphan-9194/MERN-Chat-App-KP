@@ -25,8 +25,16 @@ type Message {
   chatRoom: Chat
   createdAt: String
   isSeen: Boolean
-
 }
+  type Notification {
+  _id: ID
+  notify_recipient: User
+  notify_sender: User
+  chatRoom: Chat
+  notificationMessageIds: Message
+  createdAt: String
+}
+
 
 type Auth {
   token: ID!
@@ -39,6 +47,7 @@ type Query {
   chatsByUser(userId: ID!): [Chat]
   chat(_id: ID!): Chat
   messages(chatId: ID!): [Message]
+  getNotifications(userId: ID!): [Notification]
 }
 
 type Mutation {
@@ -55,6 +64,11 @@ type Mutation {
   isOnlineUser(userId: ID!, isOnline: Boolean!): User
   markUserOnline(userId: ID!): User
   markUserOffline(userId: ID!): User
+  addNotification(notify_recipient: ID!, notify_sender: ID, chatRoom: ID!, notificationMessageIds: ID!): Notification
+  removeNotification(notificationId: ID!): Notification
+  removeNotificationsByChatRoom(chatRoomId: ID!): [Notification]
+  updateNotification(notificationId: ID!, notify_recipient: ID, notify_sender: ID, chatRoom: ID, notificationMessageIds: [ID!]!): Notification
+
 }
 `;
 module.exports = typeDefs;

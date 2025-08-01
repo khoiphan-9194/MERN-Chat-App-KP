@@ -10,9 +10,9 @@ import { Outlet } from "react-router-dom";
 import PageHeader from "./pages/PageHeader";
 import CustomThemeProvider from "./utils/CustomThemeContext";
 import AuthenUserInfoProvider from "./utils/AuthUser_Info_Context";
+import ChatProvider from "./utils/ChatContext";
 import Footer from "./components/Footer";
 
- 
 const httpLink = createHttpLink({
   uri: "/graphql",
 });
@@ -39,13 +39,12 @@ function App() {
     <ApolloProvider client={client}>
       <AuthenUserInfoProvider>
         {/* This provider can be used to manage user info across the app */}
-        <CustomThemeProvider>
-         
-          <Outlet />
-          <Footer />
-
-
-        </CustomThemeProvider>
+        <ChatProvider>
+          <CustomThemeProvider>
+            <Outlet />
+            <Footer />
+          </CustomThemeProvider>
+        </ChatProvider>
       </AuthenUserInfoProvider>
     </ApolloProvider>
   );

@@ -6,7 +6,6 @@ import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 import { CREATE_CHAT } from "../utils/mutations";
 import { GET_CHATS_BY_USER } from "../utils/queries";
 
-
 function UserList() {
   const { loading, error, data } = useQuery(GET_USERS);
   const [filterValue, setFilterValue] = useState("");
@@ -33,13 +32,6 @@ function UserList() {
     }, 300);
     return () => clearTimeout(handler);
   }, [filterValue]);
-
-
-
-
-
-
-
 
   /*
   1. debouncedFilter.trim() !== ""
@@ -96,9 +88,7 @@ If the input is empty, we don't show any users:
       ? data?.users?.filter(
           (user) =>
             user?.username &&
-          user.username.toLowerCase().includes(debouncedFilter.toLowerCase())
-        
-            
+            user.username.toLowerCase().includes(debouncedFilter.toLowerCase())
         ) || []
       : [];
   }, [debouncedFilter, data]);
