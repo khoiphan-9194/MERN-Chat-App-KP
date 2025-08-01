@@ -543,7 +543,7 @@ const ProfileSetting = () => {
                     <Button
                       variant="danger"
                       onClick={() => {
-                        window.location.href = `/mychat/${authUserInfo.user?.userId}`;
+                        window.location.href = `/userID/${authUserInfo.user?.userId}`;
                       }}
                       style={{ width: "100%" }}
                     >
