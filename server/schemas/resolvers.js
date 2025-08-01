@@ -115,21 +115,31 @@ const resolvers = {
         });
     },
     getNotifications: async (_, { userId }, context) => {
-      if (!context.user) {
-        throw new AuthenticationError(
-          "You need to be logged in to view notifications"
-        );
-      }
-      if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
-        throw new Error("Invalid user ID format");
-      }
-      return await Notification.find({ notify_recipient: userId })
-        .sort({ createdAt: -1 }) // Sort by creation date, most recent first
-        .populate("notify_sender", "-__v -password")
-        .populate("notify_recipient", "-__v -password")
-        .populate("chatRoom", "-__v")
-        .populate("notificationMessageIds", "-__v -password");
-    },
+  if (!context.user) {
+    throw new AuthenticationError(
+      "You need to be logged in to view notifications"
+    );
+  }
+
+  if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
+    throw new Error("Invalid user ID format");
+  }
+
+  return await Notification.find({ notify_recipient: userId })
+    .sort({ createdAt: -1 }) // most recent first
+    .populate("notify_sender", "-__v -password")
+    .populate("notify_recipient", "-__v -password")
+    .populate("chatRoom", "-__v")
+    .populate({
+      path: "notificationMessageIds",
+      select: "-__v",
+      populate: {
+        path: "message_sender",
+        select: "username user_email profile_picture", // only include what you need
+      },
+});
+},
+
   },
   Mutation: {
     addUser: async (
@@ -570,6 +580,7 @@ const resolvers = {
       { notify_recipient, notify_sender, chatRoom, notificationMessageIds },
       context
     ) => {
+       const { user, io } = context;
       if (!context.user) {
         throw new AuthenticationError(
           "You need to be logged in to add a notification"
@@ -591,6 +602,11 @@ const resolvers = {
         chatRoom,
         notificationMessageIds,
       });
+      // when a new notification is created, we will emit the notification to the recipient
+      // from the server to the client
+      io.to(notify_recipient).emit("newNotification", notification);
+      
+    
 
       return notification;
     },

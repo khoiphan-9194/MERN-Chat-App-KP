@@ -1,22 +1,19 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@apollo/client";
 import { GET_CHAT_MESSAGES } from "../utils/queries";
 import {
   SEND_MESSAGE,
-  UPDATE_MESSAGE_AS_SEEN,
-  ADD_NOTIFICATION,
-  REMOVE_NOTIFICATION,
-  UPDATE_NOTIFICATION,
+
 } from "../utils/mutations";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
 import ScrollableChat from "../UI/ScrollableChat";
 import socket from "../utils/socket-client"; // Import the Socket.IO client instance
 
 function ChatMessage({ chatId }) {
-  const { authUserInfo, enterChat, exitChat } = useAuthUserInfo();
-  const addNotification = useMutation(ADD_NOTIFICATION);
+  const { enterChat, exitChat } = useAuthUserInfo();
 
-  const userId = authUserInfo.user?.userId || authUserInfo.user?._id;
+
+
   const [inputValue, setInputValue] = useState("");
 
   const { loading, error, data, refetch } = useQuery(GET_CHAT_MESSAGES, {
@@ -32,12 +29,12 @@ function ChatMessage({ chatId }) {
     // This allows us to track which chat the user is currently in
     // once user enters a chat, we can start listening for new messages
     enterChat(chatId); // from AuthUser_Info_Context.jsx
-    const handleNewMessage = (messageData) => {
+    const handleNewMessage = async (messageData) => {
       if (messageData.chatId === chatId) {
         // If the new message is in the current chat, refetch messages
         // so that every time user sends a new message,
         // we will refetch the messages to update the UI
-        refetch();
+        await refetch();
       }
     };
 
@@ -56,15 +53,17 @@ function ChatMessage({ chatId }) {
     if (chatId) {
       // Check if forceRefetch is true and chatId is valid
       //alert("Refetching messages for chat: " + chatId);
-      refetch();
+      (async () => {
+        await refetch();
+      })();
       // This will trigger a refetch of messages for the current chat
     }
   }, [chatId, refetch]); // ✅ Refetch messages when forceRefetch changes
 
   const [sendMessage] = useMutation(SEND_MESSAGE, {
-    onCompleted: () => {
+    onCompleted: async () => {
       setInputValue("");
-      refetch();
+      await refetch();
     },
     onError: (error) => {
       console.error("Error sending message:", error);
@@ -73,9 +72,9 @@ function ChatMessage({ chatId }) {
 
   const handleInputChange = (e) => setInputValue(e.target.value);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
-    sendMessage({
+   await sendMessage({
       variables: {
         chatId,
         message_content: inputValue,
@@ -83,10 +82,10 @@ function ChatMessage({ chatId }) {
     });
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = async (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      await handleSendMessage();
     }
   };
 

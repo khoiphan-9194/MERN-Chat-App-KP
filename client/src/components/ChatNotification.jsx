@@ -13,6 +13,7 @@ import { useQuery, useMutation } from "@apollo/client";
 import { GET_NOTIFICATIONS } from "../utils/queries";
 import { REMOVE_NOTIFICATIONS_BY_CHAT_ROOM } from "../utils/mutations";
 import { useChatContext } from "../utils/ChatContext";
+import socket from "../utils/socket-client";
 
 function ChatNotification() {
   const { authUserInfo } = useAuthUserInfo();
@@ -22,7 +23,7 @@ function ChatNotification() {
 
 
   // Get notifications from the server
-  const { data: notificationsData } = useQuery(GET_NOTIFICATIONS, {
+  const { data: notificationsData, refetch } = useQuery(GET_NOTIFICATIONS, {
     variables: {
       userId: authUserInfo.user?._id || authUserInfo.user?.userId,
     },
@@ -32,29 +33,35 @@ function ChatNotification() {
   const [removeNotificationsByChatRoom] = useMutation(
     REMOVE_NOTIFICATIONS_BY_CHAT_ROOM,
     {
-      onCompleted: () => {
-        console.log("Notifications cleared successfully");
-      },
-      onError: (error) => {
-        console.error("Error clearing notifications:", error);
-      },
+      refetchQueries: [
+        {
+          query: GET_NOTIFICATIONS,
+        },
+      ],
+      awaitRefetchQueries: true, // ✅ ensure refetch completes before continuing
     }
   );
 
-  // Format and group notifications by sender
   useEffect(() => {
-    if (notificationsData?.getNotifications) {
-      console.log("Notifications data:", notificationsData.getNotifications);
+    const handleNewNotification = async () => {
+      try {
+        // Fetch the latest notifications from the server
+        // every time a new notification is received,
+        // we will refetch the notifications to update the UI
+        if (!refetch) return;
+        const { data } = await refetch();
+
+      if (!data?.getNotifications) return;
+
+      console.log("Notifications data:", data.getNotifications);
 
       const frequencyMap = {};
 
-      notificationsData.getNotifications.forEach((notif) => {
+      for (const notif of data.getNotifications) {
         const sender = notif.notify_sender.username;
         const chatRoomId = notif.chatRoom?._id || notif.chatRoomId;
         const chatRoomName = notif.chatRoom?.chat_name || notif.chatRoomName;
 
-        // if sender not in frequencyMap, initialize it
-        // prevent duplicate entries
         if (!frequencyMap[sender]) {
           frequencyMap[sender] = {
             sender,
@@ -63,34 +70,37 @@ function ChatNotification() {
             chatRoomName,
           };
         }
+      
 
         frequencyMap[sender].notificationCount++;
 
-        // Optionally update chatRoomId & chatRoomName if needed
-        // (e.g. prefer latest or most complete info)
         if (chatRoomId) frequencyMap[sender].chatRoomId = chatRoomId;
         if (chatRoomName) frequencyMap[sender].chatRoomName = chatRoomName;
-      });
+        }
+        
 
-      const formatted = Object.values(frequencyMap); // now it's an array of objects
-      console.log("Formatted notifications:", formatted);
-
-      setNotificationFrequency(formatted);
-      setCount(formatted.length);
+      console.log("Formatted notifications:", Object.values(frequencyMap));
+      setNotificationFrequency(Object.values(frequencyMap));
+      setCount(Object.values(frequencyMap).length);
+    } catch (err) {
+      console.error("Error handling newNotification:", err);
     }
-  }, [notificationsData]);
+  };
 
-  // Handle clicking a notification group (from a sender)
+  socket.on("newNotification", handleNewNotification);
+
+  return () => {
+    socket.off("newNotification", handleNewNotification);
+  };
+}, [refetch]);
+
+
+
   // Handle clicking a notification group (from a sender)
   const handleClick = async (event, notificationEntry) => {
     event.stopPropagation();
 
     try {
-      // Remove notifications for that chat room
-      await removeNotificationsByChatRoom({
-        variables: { chatRoomId: notificationEntry.chatRoomId },
-      });
-
       // Set the selected chat
       setSelectedCurrentChat(notificationEntry);
 
@@ -101,6 +111,11 @@ function ChatNotification() {
 
       // Decrease the total notification count
       setCount((prev) => prev - 1);
+
+      // Remove notifications for that chat room
+      await removeNotificationsByChatRoom({
+        variables: { chatRoomId: notificationEntry.chatRoomId },
+      });
     } catch (error) {
       console.error("Error handling notification click:", error);
     }

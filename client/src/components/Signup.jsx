@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Form, Button, Alert, Modal } from "react-bootstrap";
+import { Form, Button, Alert } from "react-bootstrap";
 import { useMutation } from "@apollo/client";
 import { USER_SIGNUP } from "../utils/mutations";
 import Auth from "../utils/auth";

@@ -65,12 +65,12 @@ function MyChat({ userId, setCurrentChat }) {
     });
 
     // Listen for new messages in the chat rooms
-    const handleNewMessage = (messageData) => {
+    const handleNewMessage = async (messageData) => {
       console.log("New message received:", messageData);
 
       // Refetch if the message is for any selected chat
       if (selectedChatIds.includes(messageData.chatId)) {
-        refetch();
+        await refetch();
       }
     };
 
@@ -87,12 +87,12 @@ function MyChat({ userId, setCurrentChat }) {
 
   // Note #4
   useEffect(() => {
-    const handleNewChatRoom = (chatData) => {
+    const handleNewChatRoom = async (chatData) => {
       // we check as long as user sent a message to the chat room, we will refetch the chats
       if (!chatData || !chatData._id) return;
       console.log("New chat room created:", chatData);
 
-      refetch();
+      await refetch();
       socket.emit("joinChat", chatData._id); // as long as a new chat room is created
       // we will join the chat room
     };

@@ -16,8 +16,6 @@ import {
   IS_ONLINE_USER,
   MARK_MESSAGE_AS_SEEN,
   ADD_NOTIFICATION,
-  REMOVE_NOTIFICATION,
-  UPDATE_NOTIFICATION,
 } from "../utils/mutations";
 
 export const AuthUser_Info_Context = createContext();
@@ -38,8 +36,6 @@ const AuthenUserInfoProvider = ({ children }) => {
   const [update_MessageAsSeen] = useMutation(UPDATE_MESSAGE_AS_SEEN);
   const [markMessageAsSeen] = useMutation(MARK_MESSAGE_AS_SEEN);
   const [addNotification] = useMutation(ADD_NOTIFICATION);
-  const [removeNotification] = useMutation(REMOVE_NOTIFICATION);
-  const [updateNotification] = useMutation(UPDATE_NOTIFICATION);
   const [isOnlineUser] = useMutation(IS_ONLINE_USER);
   // const [isSeenMessage, setIsSeenMessage] = useState(null);
   const [unSeenMessageIDs, setUnSeenMessageIDs] = useState([]);
@@ -244,6 +240,7 @@ const AuthenUserInfoProvider = ({ children }) => {
     // socket.on means we are listening for the "messageReceived" event from the server
     // then calling handleNotification when that event occurs
     socket.on("messageReceived", handleNotification);
+  
     console.log("✅ Socket listener for messageReceived registered");
 
     return () => {
@@ -258,6 +255,7 @@ const AuthenUserInfoProvider = ({ children }) => {
     updateUnSeenMessageIDs,
     addNotificationToUser,
   ]);
+
 
   // Debugging
   useEffect(() => {

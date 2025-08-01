@@ -78,6 +78,18 @@ module.exports = (io) => {
       console.log(`✅ New message to chat ${chatId}:`, messageData);
     });
 
+    // in the resolvers.js file, we will listen for the "newNotification" event 
+    // for example, when a new notification is created,
+    // we will emit the notification to all clients in the chat room
+    // so that they can receive the new notification in real-time
+    socket.on("newNotification", ({ chatId, notification }) => {
+      if (!chatId || !notification) return;
+      // Emit the new notification to all clients in the chat room
+      io.to(chatId).emit("newNotification", notification);
+      console.log(`🔔 New notification in chat ${chatId}:`, notification);
+  
+    });
+
     socket.on("disconnect", (reason) => {
       // this event means that if the client disconnects, it will log the reason
 
