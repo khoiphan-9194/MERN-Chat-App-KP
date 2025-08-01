@@ -91,9 +91,8 @@ Now, rect contains an object like this:
           const isOwnMessage = message.message_sender._id === userId;
           const showSenderName =
             isLastMessage(messages, index, userId) ||
-            isSameSender(messages, message, index, userId);
+            isSameSender(messages, message, index );
 
-          // Attach ref to the last message
 
           return (
             <div

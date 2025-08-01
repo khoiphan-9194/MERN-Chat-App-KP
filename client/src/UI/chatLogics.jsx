@@ -1,4 +1,4 @@
-export const isSameSender = (messages, currentMessage, index, userId) => {
+export const isSameSender = (messages, currentMessage, index) => {
   if (index >= messages.length - 1) return false;
 
   const nextSenderId = messages[index + 1]?.message_sender?._id;

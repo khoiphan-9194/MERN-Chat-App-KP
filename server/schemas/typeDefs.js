@@ -15,7 +15,6 @@ type User {
   latestMessage: Message
   groupAdmin: User
   createdAt: String
-  wasSeen: Boolean
 }
 
 type Message {
