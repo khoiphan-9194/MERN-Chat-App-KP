@@ -63,11 +63,10 @@ const startApolloServer = async () => {
 
   // Need to use the routes after the GraphQL middleware
   // This will allow us to have both GraphQL and RESTful API routes in the same
-  // app.use(routes); // Loads routes/index.js
+  app.use(routes); // Loads routes/index.js
 
   if (process.env.NODE_ENV === "production") {
     app.use(express.static(path.join(__dirname, "../client/dist")));
-    
 
     app.get("*", (req, res) => {
       res.sendFile(path.join(__dirname, "../client/dist/index.html"));
