@@ -1,0 +1,7 @@
+
+JWT_SECRET=mysecretsshhhhh
+JWT_EXPIRATION=3h
+MONGODB_URI=mongodb+srv://phanminhkhoi91:heoM%40p9194@cluster0.xqnmjp2.mongodb.net/chatappDB
+
+
+
