@@ -10,7 +10,7 @@
     "develop": "concurrently \"cd server && npm run watch\" \"cd client && npm run dev\"",
     "develop2": "concurrently \"cd server && npm run a_watch\" \"cd client && npm run dev\"",
     "install": "cd server && npm i && cd ../client && npm i",
-    "build": "cd client && npm run build",
+    "build": "npm install && cd client && npm run build",
     "render-build": "npm install && npm run build",
     "seed": "cd server && npm run seed",
     "client": "wait-on tcp:3001 && cd client && npm run dev"
