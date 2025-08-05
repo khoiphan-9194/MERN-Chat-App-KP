@@ -4,7 +4,7 @@
   "description": "",
   "main": "server/server.js",
   "scripts": {
-    "start": "node server/server.js",
+    "start": "node server/apolloServer.js",
     "a_start": "node server/apolloServer.js",
     "a_watch": "nodemon server/apolloServer.js",
     "develop": "concurrently \"cd server && npm run watch\" \"cd client && npm run dev\"",

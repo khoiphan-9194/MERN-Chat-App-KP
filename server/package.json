@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node apolloServer.js",
     "a_start": "node apolloServer.js",
     "a_watch": "nodemon apolloServer.js",
     "watch": "nodemon server.js",
