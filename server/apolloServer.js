@@ -20,7 +20,7 @@ const app = express();
 // Create HTTP server for both Express and Socket.IO
 const httpServer = http.createServer(app);
 
-const allowedOrigins = ["http://localhost:3000", process.env.CLIENT_URL].filter(
+const allowedOrigins = [process.env.LOCAL_URL, process.env.CLIENT_URL].filter(
   Boolean
 ); // Boolean is used to filter out any falsy values, ensuring that only valid URLs are included,
 // CLIENT_URL is an environment variable that can be set to the client URL in production like "https://yourdomain.com"
