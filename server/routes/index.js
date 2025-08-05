@@ -1,9 +1,8 @@
 const router = require("express").Router();
-const apiRoutes = require("./api");
-router.use("/api", apiRoutes);
+const uploadRoutes = require("./upload_avatarRoutes");
 
-router.use((req, res) => {
-  res.status(404).json({ error: "Wrong route!" });
-});
+// Prefix the upload route
+router.use("/upload", uploadRoutes);
 
+// Example: this makes POST /api/upload/single available on server
 module.exports = router;

@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const uploadAvatarRoutes = require("./upload_avatarRoutes");
 
-router.use("/upload/single", uploadAvatarRoutes); // makes POST /api/upload/single
+// This makes POST /api/upload/single available
+router.use("/upload", uploadAvatarRoutes);
 
 module.exports = router;
