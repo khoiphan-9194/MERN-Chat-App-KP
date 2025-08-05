@@ -392,7 +392,7 @@ const ProfileSetting = () => {
               ) : (
                 <img
                   src={
-                    `/userAvatars/${formUpdateUser.profile_picture}` ||
+                    `/userAvatar/${formUpdateUser.profile_picture}` ||
                     `${authUserInfo.user?.profile_picture}`
                   }
                   alt="User Avatar"

@@ -63,7 +63,7 @@ const Signup = () => {
           password: userFormData.password,
           profile_picture: newPostImageName
             ? `/userAvatar/${newPostImageName}`.trim()
-            : "/assets/default-avatar.jpg",
+            : "/userAvatar/default-avatar.jpg",
         },
       });
 
