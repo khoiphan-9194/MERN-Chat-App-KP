@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const { uploadAvatar } = require("../../controllers/uploadController");
 
-router.post("/single", uploadAvatar); // This handles POST /api/upload/single
+// POST /api/upload/single
+router.post("/single", uploadAvatar);
 
 module.exports = router;
