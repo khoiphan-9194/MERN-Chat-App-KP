@@ -7,135 +7,81 @@ import {
   Portal,
 } from "@chakra-ui/react";
 import { FiBell } from "react-icons/fi";
-import { useState, useEffect } from "react";
-import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
-import { useQuery, useMutation } from "@apollo/client";
-import { GET_NOTIFICATIONS } from "../utils/queries";
-import { REMOVE_NOTIFICATIONS_BY_CHAT_ROOM } from "../utils/mutations";
+import { useEffect } from "react";
+
 import { useChatContext } from "../utils/ChatContext";
-import socket from "../utils/socket-client";
 
 function ChatNotification() {
-  const { authUserInfo } = useAuthUserInfo();
-  const { setSelectedCurrentChat } = useChatContext();
-  const [count, setCount] = useState(0);
-  const [notificationFrequency, setNotificationFrequency] = useState([]);
-
-
-  // Get notifications from the server
-  const { data: notificationsData, refetch } = useQuery(GET_NOTIFICATIONS, {
-    variables: {
-      userId: authUserInfo.user?._id || authUserInfo.user?.userId,
-    },
-    skip: !authUserInfo.user,
-  });
-
-  const [removeNotificationsByChatRoom] = useMutation(
-    REMOVE_NOTIFICATIONS_BY_CHAT_ROOM,
-    {
-      refetchQueries: [
-        {
-          query: GET_NOTIFICATIONS,
-        },
-      ],
-      awaitRefetchQueries: true, // ✅ ensure refetch completes before continuing
-    }
-  );
+  const {
+    setSelectedCurrentChat,
+    notificationCount,
+    notificationsDataFrequency,
+    remove_notification,
+  } = useChatContext();
 
   useEffect(() => {
-    const handleNewNotification = async () => {
-      try {
-        // Fetch the latest notifications from the server
-        // every time a new notification is received,
-        // we will refetch the notifications to update the UI
-        if (!refetch) return;
-        const { data } = await refetch();
+    // check if notificationsDataFrequency and notificationCount are available
+    if (notificationsDataFrequency && notificationCount) {
+      // Log the notification count and frequency data
 
-      if (!data?.getNotifications) return;
-
-      console.log("Notifications data:", data.getNotifications);
-
-      const frequencyMap = {};
-
-      for (const notif of data.getNotifications) {
-        const sender = notif.notify_sender.username;
-        const chatRoomId = notif.chatRoom?._id || notif.chatRoomId;
-        const chatRoomName = notif.chatRoom?.chat_name || notif.chatRoomName;
-
-        if (!frequencyMap[sender]) {
-          frequencyMap[sender] = {
-            sender,
-            notificationCount: 0,
-            chatRoomId,
-            chatRoomName,
-          };
-        }
-      
-
-        frequencyMap[sender].notificationCount++;
-
-        if (chatRoomId) frequencyMap[sender].chatRoomId = chatRoomId;
-        if (chatRoomName) frequencyMap[sender].chatRoomName = chatRoomName;
-        }
-        
-
-      console.log("Formatted notifications:", Object.values(frequencyMap));
-      setNotificationFrequency(Object.values(frequencyMap));
-      setCount(Object.values(frequencyMap).length);
-    } catch (err) {
-      console.error("Error handling newNotification:", err);
+      console.log(notificationCount);
+      console.log("Notification Frequency Data:", notificationsDataFrequency);
     }
-  };
-
-  socket.on("newNotification", handleNewNotification);
-
-  return () => {
-    socket.off("newNotification", handleNewNotification);
-  };
-}, [refetch]);
-
-
+  }, [notificationCount, notificationsDataFrequency]);
 
   // Handle clicking a notification group (from a sender)
-  const handleClick = async (event, notificationEntry) => {
+  const handleNotificationClick = async (event, notificationEntry) => {
     event.stopPropagation();
 
     try {
       // Set the selected chat
       setSelectedCurrentChat(notificationEntry);
-
-      // Remove the sender group from local state
-      setNotificationFrequency((prev) =>
-        prev.filter((item) => item.sender !== notificationEntry.sender)
-      );
-
-      // Decrease the total notification count
-      setCount((prev) => prev - 1);
-
-      // Remove notifications for that chat room
-      await removeNotificationsByChatRoom({
-        variables: { chatRoomId: notificationEntry.chatRoomId },
-      });
+      // Remove the notification for the clicked chat room
+      await remove_notification(notificationEntry.chatRoomId);
     } catch (error) {
       console.error("Error handling notification click:", error);
     }
   };
 
   // Mark all notifications as read
+  /*
   const handleClearAll = async () => {
     try {
+      // Identify performance issue with using await inside a loop.
       // Loop through each notification group by chatRoomId
-      for (const { chatRoomId } of notificationFrequency) {
+      for (const { chatRoomId } of notificationsDataFrequency) {
         if (chatRoomId) {
-          await removeNotificationsByChatRoom({
-            variables: { chatRoomId },
-          });
+          await remove_notification(chatRoomId);
+          //This processes one notification at a time, waiting 
+          //for each mutation to finish before moving to the next 
+          //— which is slow and inefficient if you have many notifications.
         }
       }
 
-      // Clear the local notification state
-      setNotificationFrequency([]);
-      setCount(0);
+ 
+    } catch (error) {
+      console.error("Error clearing notifications:", error);
+    }
+  };
+  */
+  
+
+  const handleClearAll = async () => {
+    try {
+      const promises = notificationsDataFrequency.map(({ chatRoomId }) => {
+        if (chatRoomId) {
+          return remove_notification(chatRoomId);
+        }
+      });
+
+      await Promise.all(promises);
+      /*
+    🔁 Why this is better:
+    Promise.all() 
+    sends out all mutation requests at once and waits for all to finish.
+    Much faster if you’re clearing multiple notifications.
+    Keeps the UI more responsive since it doesn’t block on each individual mutation.
+    */
     } catch (error) {
       console.error("Error clearing notifications:", error);
     }
@@ -161,18 +107,18 @@ function ChatNotification() {
               <Popover.Arrow />
               <Popover.Body>
                 <Popover.Title fontWeight="medium">
-                  {count > 0
-                    ? `You have ${count} new notification${count > 1 ? "s" : ""}`
+                  {notificationCount > 0
+                    ? `You have ${notificationCount} new notification${notificationCount > 1 ? "s" : ""}`
                     : "No new notifications"}
                 </Popover.Title>
 
                 <Box mb={4}>
-                  {notificationFrequency.map((notification, index) => (
+                  {notificationsDataFrequency.map((notification, index) => (
                     <Button
                       key={index}
                       variant="link"
                       display="block"
-                      onClick={(e) => handleClick(e, notification)}
+                      onClick={(e) => handleNotificationClick(e, notification)}
                     >
                       <Text mb={1} color="gray.700">
                         • {notification.sender}{" "}
@@ -215,7 +161,7 @@ function ChatNotification() {
       </Popover.Root>
 
       {/* 🔴 Red count badge */}
-      {count > 0 && (
+      {notificationCount > 0 && Number.isInteger(notificationCount) && (
         <Box
           position="absolute"
           top="-1"
@@ -232,7 +178,7 @@ function ChatNotification() {
           fontWeight="bold"
           boxShadow="0 0 0 1px white"
         >
-          {count > 99 ? "99+" : count}
+          {notificationCount > 10 ? "10+" : notificationCount}
         </Box>
       )}
     </Box>
@@ -240,3 +186,81 @@ function ChatNotification() {
 }
 
 export default ChatNotification;
+
+
+
+/*
+🔹 What is a Promise in JavaScript?
+
+A Promise is a built-in JavaScript object that represents a task that hasn't completed yet, but will complete in the future (either successfully or with an error).
+
+You usually deal with promises when you do things like:
+
+    Fetch data from a server
+
+    Read a file
+
+    Wait for a timeout
+
+Example:
+
+const fetchData = () => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve("Data received!");
+    }, 1000);
+  });
+};
+
+fetchData().then((result) => console.log(result)); // After 1 sec: "Data received!"
+
+🔹 What does "concurrently" mean?
+
+    Concurrency means running multiple tasks at the same time (or overlapping in time), without waiting for one to finish before starting the next.
+
+🔸 Sequential (not concurrent):
+
+await task1();
+await task2();
+await task3();
+
+Each taskX() waits for the previous one to finish. Slow if each takes 1s: total = 3s
+🔸 Concurrent (better!):
+
+await Promise.all([task1(), task2(), task3()]);
+
+All three taskX() start at the same time, and you wait until all of them finish. If each takes 1s: total = 1s
+🔹 Why does this matter?
+
+In your handleClearAll, you were doing this:
+
+for (const chatRoomId of chatRooms) {
+  await remove_notification(chatRoomId); // one at a time
+}
+
+That means:
+
+    You wait for the first remove_notification to finish
+
+    Then the second
+
+    Then the third
+
+    ...and so on
+
+If each one takes 500ms and you have 5 notifications = 2.5 seconds total
+
+✅ But with:
+
+await Promise.all(
+  chatRooms.map(chatRoomId => remove_notification(chatRoomId))
+);
+
+All remove_notification(chatRoomId) calls run together at once. You only wait once, and it finishes faster.
+🧠 Summary
+Concept	Means...
+Promise	A value that represents a future async result
+await	Wait for a Promise to finish before continuing
+Promise.all()	Run many Promises at once, wait for all to complete
+Concurrent	Tasks overlap in time (faster than one-by-one)
+*/
