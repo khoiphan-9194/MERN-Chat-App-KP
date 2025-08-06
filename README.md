@@ -142,7 +142,7 @@ For major changes, please open an issue to discuss your ideas beforehand.
 Got questions or feedback? Feel free to reach out:
 
 - 📧 Email: [phanminhkhoi91@gmail.com](mailto:phanminhkhoi91@gmail.com)
-- 💻 GitHub: [@khoiphan-9194](https://github.com/khoiphan-9194)
+- 💻 GitHub: [khoiphan-9194](https://github.com/khoiphan-9194)
 
 ---
 
