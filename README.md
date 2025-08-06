@@ -50,7 +50,7 @@ The backend leverages both **RESTful APIs** and **GraphQL** (via Apollo Server) 
 - Profile customization: avatar, username, and password updates
 - Unread message notifications
 - Online/offline status visibility
-- Search for users and start private or group chats
+- Search for users and start private chats
 - Responsive and modern UI built with React & Chakra UI
 - Scalable architecture with maintainable codebase
 
