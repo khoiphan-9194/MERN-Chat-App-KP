@@ -17,6 +17,7 @@ function MyChat({ userId, setCurrentChat }) {
   const { loading, error, data, refetch } = useQuery(GET_CHATS_BY_USER, {
     variables: { userId },
     skip: !userId,
+
   });
 
   useEffect(() => {
@@ -24,8 +25,8 @@ function MyChat({ userId, setCurrentChat }) {
       await refetch();
       console.log("Refetched chats after MyChat component mounted");
     };
+    
     fetchData();
-
   }, [notificationsDataFrequency, refetch]);
 
   // chats = useMemo(() => data?.chatsByUser || [], [data])
@@ -199,13 +200,13 @@ function MyChat({ userId, setCurrentChat }) {
                           }}
                         />
                       ) : (
-                        !chat.latestMessage.isSeen && (
+                         !chat.latestMessage.isSeen && (
                           // Unseen icon (using a Chakra UI red dot)
                           <Box
                             as="span"
                             ml={2}
-                            w="10px"
-                            h="10px"
+                            w="5px"
+                            h="5px"
                             borderRadius="full"
                             bg="red.500"
                             display="inline-block"

@@ -1,16 +1,18 @@
-/*
-import { io } from "socket.io-client";
-// this file is used to create a Socket.IO client instance
-// and export it for use in other parts of the application
-// so that we can use it in our components
-const socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:3001", {
-  transports: ["websocket"], // Fast WebSocket-only connections
-  reconnection: true, // Auto-reconnect
-  autoConnect: false, // Manual connect later when user exists
-});
-export default socket;
-*/
 
+// uncomment the following lines from line 3 to 12 if you want to run the app locally
+// import { io } from "socket.io-client";
+// // this file is used to create a Socket.IO client instance
+// // and export it for use in other parts of the application
+// // so that we can use it in our components
+// const socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:3001", {
+//   transports: ["websocket"], // Fast WebSocket-only connections
+//   reconnection: true, // Auto-reconnect
+//   autoConnect: false, // Manual connect later when user exists
+// });
+// export default socket;
+
+
+// comment  from line 15 to 23 if want to run locally
 import { io } from "socket.io-client";
 
 const socket = io("/", {

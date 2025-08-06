@@ -89,12 +89,12 @@ the same notification appears more than once.
 It preserves your original logic and grouping by sender without changing the shape of your output.
 */
       const countedNotificationIds = new Set(); // Track unique notifications to avoid double counting
-
       // Loop through each notification and group by sender
       for (const notif of notifications) {
         const sender = notif.notify_sender?.username;
         const chatRoomId = notif.chatRoom?._id || notif.chatRoomId;
         const chatRoomName = notif.chatRoom?.chat_name || notif.chatRoomName;
+        const messageData = notif.notificationMessageIds || notif.messageData;
 
         // Skip if no sender or chatRoomId
         if (!sender || !chatRoomId) continue;
@@ -112,6 +112,7 @@ It preserves your original logic and grouping by sender without changing the sha
             notificationCount: 0,
             chatRoomId,
             chatRoomName,
+            messageData: messageData || [],
           };
         }
         // if the above conditions are met, just increment the count
@@ -124,6 +125,10 @@ It preserves your original logic and grouping by sender without changing the sha
         // Update chatRoomName only if it exists
         // This prevents overwriting with undefined values
         if (chatRoomName) frequencyMap[sender].chatRoomName = chatRoomName;
+        // Add messageData if it exists
+        if (messageData && messageData.length > 0) {
+          frequencyMap[sender].messageData.push(...messageData);
+        }
       }
 
       // frequencyMap data structure:
