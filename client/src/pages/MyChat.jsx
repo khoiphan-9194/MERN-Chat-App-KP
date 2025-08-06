@@ -3,18 +3,30 @@ import { useQuery } from "@apollo/client";
 import { GET_CHATS_BY_USER } from "../utils/queries";
 import { Box, Text } from "@chakra-ui/react";
 import { useAuthUserInfo } from "../utils/AuthUser_Info_Context";
+import { useChatContext } from "../utils/ChatContext";
 import socket from "../utils/socket-client"; // Import the Socket.IO client instance+
 import { displayTime } from "../utils/helpers"; // Import the displayTime function
 import ChatDeletion from "../components/ChatDeletion"; // Import the ChatDeletion component
 import { IoMdArrowRoundForward } from "react-icons/io";
 
+
 function MyChat({ userId, setCurrentChat }) {
   const { updateSelectedChat, authUserInfo, updateMessageAsSeen } =
     useAuthUserInfo();
+  const { notificationsDataFrequency } = useChatContext();
   const { loading, error, data, refetch } = useQuery(GET_CHATS_BY_USER, {
     variables: { userId },
     skip: !userId,
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await refetch();
+      console.log("Refetched chats after MyChat component mounted");
+    };
+    fetchData();
+
+  }, [notificationsDataFrequency, refetch]);
 
   // chats = useMemo(() => data?.chatsByUser || [], [data])
   // useMemo is used to memoize the chats array so that it does not get recalculated on every render
@@ -153,11 +165,11 @@ function MyChat({ userId, setCurrentChat }) {
               _hover={{ bg: "teal.500" }}
               onClick={() => handleViewChat(chat)}
             >
-              <Text fontWeight="bold">{chat.chat_name}</Text>
+              <Text fontWeight="bold">{chat.chat_name }</Text>
               <Text fontSize="sm">
                 {chat.latestMessage ? (
                   <>
-                    <b>{chat.latestMessage.message_sender?.username}:</b>{" "}
+                    <b>{chat.latestMessage.message_sender?.username }:</b>{" "}
                     {chat.latestMessage.message_content}
                     <Text
                       fontSize="2xs"

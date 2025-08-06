@@ -30,8 +30,7 @@ function ChatPage() {
 
   return (
     <main>
-      <div style={{ width: "100%" }}>
-        {/* Only show chat UI if user is logged in */}
+      <div className="chat-container">
         {auth.loggedIn() ? (
           <>
             <PageHeader />
@@ -55,6 +54,7 @@ function ChatPage() {
                 <MyChat
                   userId={authUserInfo?.user?.userId || null}
                   setCurrentChat={setSelectedCurrentChat}
+                 
                 />
               </Box>
 
